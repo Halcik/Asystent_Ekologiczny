@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -20,6 +21,8 @@ public class MainActivity extends AppCompatActivity {
     private ReportsFragment reportsFragment;
     private SettingsFragment settingsFragment;
 
+    private int pendingNav = -1; // docelowa nawigacja po zamknięciu AddProductFragment
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,7 +34,18 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnItemSelectedListener(item -> {
-            showFragment(item.getItemId());
+            int id = item.getItemId();
+            if (isAddProductVisible()) {
+                // Jeśli edytujemy produkt i kliknięto Produkty – zostaw formularz
+                if (id == R.id.navigation_products) {
+                    return true; // nic nie zmieniamy
+                }
+                // Inna zakładka – zamknij formularz i zapamiętaj dokąd przejść
+                pendingNav = id;
+                getSupportFragmentManager().popBackStack();
+                return true;
+            }
+            showFragment(id);
             return true;
         });
 
@@ -59,6 +73,16 @@ public class MainActivity extends AppCompatActivity {
         int selectedId = savedInstanceState == null ? R.id.navigation_products : savedInstanceState.getInt(KEY_SELECTED, R.id.navigation_products);
         bottomNavigationView.setSelectedItemId(selectedId);
         showFragment(selectedId);
+
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            if (!isAddProductVisible() && pendingNav != -1) {
+                int dest = pendingNav;
+                pendingNav = -1;
+                showFragment(dest);
+                // Ustaw zaznaczenie na docelowym elemencie (mogło się zmienić wcześniej)
+                bottomNavigationView.setSelectedItemId(dest == 0 ? R.id.navigation_products : dest);
+            }
+        });
     }
 
     private void showFragment(int itemId) {
@@ -102,5 +126,10 @@ public class MainActivity extends AppCompatActivity {
         if (bottomNavigationView != null) {
             outState.putInt(KEY_SELECTED, bottomNavigationView.getSelectedItemId());
         }
+    }
+
+    private boolean isAddProductVisible() {
+        Fragment f = getSupportFragmentManager().findFragmentByTag(AddProductFragment.TAG);
+        return f != null && f.isVisible();
     }
 }
