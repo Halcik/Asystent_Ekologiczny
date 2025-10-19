@@ -1,0 +1,77 @@
+# ---------------- Android / Gradle ----------------
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.log
+*.hprof
+
+# Build artefakty
+/build/
+/**/build/
+/**/out/
+/outputs/
+
+# Gradle (katalog roboczy)
+.gradle/
+/**/.gradle/
+
+# ZOSTAW w repo (nie ignoruj – wrapper i konfiguracja projektu)
+#!gradlew
+#!gradlew.bat
+#!gradle/wrapper/gradle-wrapper.jar
+#!gradle/wrapper/gradle-wrapper.properties
+#!settings.gradle
+#!settings.gradle.kts
+#!build.gradle
+#!build.gradle.kts
+#!gradle.properties
+#!gradle/libs.versions.toml
+
+# ---------------- Android Studio / IntelliJ ----------------
+*.iml
+.idea/
+# (opcjonalnie współdziel)
+# !.idea/codeStyles/
+# !.idea/inspectionProfiles/
+
+# ---------------- Konfiguracja lokalna ----------------
+local.properties
+
+# ---------------- NDK / CMake (jeśli używasz) ----------------
+.cxx/
+.externalNativeBuild/
+**/obj/**
+
+# ---------------- Lint ----------------
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# ---------------- Firebase / Crashlytics (jeśli używasz) ----------------
+# zwykle nie commitujemy kluczy/sekretów
+app/google-services.json
+app/src/**/google-services.json
+.crashlytics/
+fabric.properties
+app/fabric.properties
+GoogleService-Info.plist
+
+# ---------------- Podpisy / sekrety ----------------
+*.keystore
+*.jks
+signing.properties
+keystore.properties
+
+# ---------------- Fastlane ----------------
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# ---------------- System / IDE ----------------
+.DS_Store
+Thumbs.db
+
