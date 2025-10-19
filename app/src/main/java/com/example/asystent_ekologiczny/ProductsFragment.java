@@ -72,7 +72,7 @@ public class ProductsFragment extends Fragment {
         if (listLayout == null) return;
         listLayout.removeAllViews();
         List<Product> products = dbHelper.getAllProducts();
-        int expiringCount = 0;
+        int expiringCount = 0; // liczymy wszystko co ma <=3 dni do końca lub już po terminie
         Date today = stripTime(new Date());
         for (Product p : products) {
             if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
@@ -80,7 +80,7 @@ public class ProductsFragment extends Fragment {
                     Date exp = dateFormat.parse(p.getExpirationDate());
                     if (exp != null) {
                         long days = (exp.getTime() - today.getTime()) / (1000L*60*60*24);
-                        if (days >= 0 && days <= 3) expiringCount++;
+                        if (days <= 3) expiringCount++; // zawiera też wartości ujemne (po terminie)
                     }
                 } catch (ParseException ignored) {}
             }
@@ -137,7 +137,7 @@ public class ProductsFragment extends Fragment {
         tvTitle.setTextSize(16);
 
         TextView tvSubtitle = new TextView(requireContext());
-        String formattedPrice = priceFormat.format(p.getPrice()).replace('.', ',') + "zł";
+        String formattedPrice = priceFormat.format(p.getPrice()).replace('.', ',') + " zł"; // poprawiony format
         String subtitle = "Cena: " + formattedPrice;
         if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) subtitle += "  •  Ważność: " + p.getExpirationDate();
         tvSubtitle.setText(subtitle);

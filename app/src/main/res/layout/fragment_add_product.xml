@@ -12,22 +12,27 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_name"
+            style="@style/AppTextInputBase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Nazwa produktu">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_name"
+                style="@style/AppTextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_price"
+            style="@style/AppTextInputBase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Cena (np. 4.50)">
+            android:layout_marginTop="12dp"
+            android:hint="Cena (np. 4,50)">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_price"
+                style="@style/AppTextInputEditText"
                 android:inputType="numberDecimal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
@@ -35,11 +40,14 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_expiration"
+            style="@style/AppTextInputBase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:hint="Data ważności (yyyy-MM-dd)">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_expiration"
+                style="@style/AppTextInputEditText"
                 android:focusable="false"
                 android:clickable="true"
                 android:layout_width="match_parent"
@@ -48,22 +56,31 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_category"
+            style="@style/AppTextInputDropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Kategoria">
-            <com.google.android.material.textfield.TextInputEditText
+            android:layout_marginTop="12dp"
+            android:hint="Kategoria"
+            app:endIconMode="dropdown_menu">
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/et_category"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:textColor="@android:color/white"
+                android:textColorHint="#99FFFFFF" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_description"
+            style="@style/AppTextInputBase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:hint="Opis">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_description"
+                style="@style/AppTextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lines="3"
@@ -73,22 +90,31 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_store"
+            style="@style/AppTextInputDropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Sklep">
-            <com.google.android.material.textfield.TextInputEditText
+            android:layout_marginTop="12dp"
+            android:hint="Sklep"
+            app:endIconMode="dropdown_menu">
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/et_store"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:textColor="@android:color/white"
+                android:textColorHint="#99FFFFFF" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_purchase"
+            style="@style/AppTextInputBase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:hint="Data zakupu (yyyy-MM-dd)">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_purchase"
+                style="@style/AppTextInputEditText"
                 android:focusable="false"
                 android:clickable="true"
                 android:layout_width="match_parent"
