@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nazwa produktu">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Cena (np. 4.50)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_price"
+                android:inputType="numberDecimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_expiration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Data ważności (yyyy-MM-dd)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_expiration"
+                android:focusable="false"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Kategoria">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Opis">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="3"
+                android:maxLines="5"
+                android:gravity="top|start" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_store"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Sklep">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_store"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_purchase"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Data zakupu (yyyy-MM-dd)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_purchase"
+                android:focusable="false"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Zapisz" />
+
+    </LinearLayout>
+</ScrollView>

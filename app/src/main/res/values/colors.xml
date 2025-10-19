@@ -2,4 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Nowe kolory używane w bottom navigation i gradientach -->
+    <color name="teal_700">#018786</color>
+    <color name="gradient_start">#667eea</color>
+    <color name="gradient_end">#764ba2</color>
+    <color name="card_border_danger">#dc3545</color>
+    <color name="card_border_warning">#ffc107</color>
+    <color name="card_border_success">#28a745</color>
 </resources>

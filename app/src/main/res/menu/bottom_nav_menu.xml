@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_products"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Produkty" />
+    <item
+        android:id="@+id/navigation_deposit"
+        android:icon="@android:drawable/ic_menu_rotate"
+        android:title="Kaucja" />
+    <item
+        android:id="@+id/navigation_reports"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="Raporty" />
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Ustawienia" />
+</menu>
+
