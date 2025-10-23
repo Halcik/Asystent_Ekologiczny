@@ -183,18 +183,6 @@ public class ProductsFragment extends Fragment {
         recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(), recyclerView.getPaddingRight(), bottomExtraPaddingPx);
     }
 
-    public void toggleLayout() {
-        isGrid = !isGrid;
-        applyLayoutManager();
-        adapter.setGridMode(isGrid);
-        if (viewModeToggle != null) {
-            viewModeToggle.check(isGrid ? R.id.btn_view_grid : R.id.btn_view_list);
-        }
-        requireActivity().invalidateOptionsMenu();
-    }
-
-    public boolean isGridMode() { return isGrid; }
-
     // NOWA METODA: wstawia pojedynczy produkt z animacją
     public void addNewProduct(long id) {
         if (!isAdded()) return;

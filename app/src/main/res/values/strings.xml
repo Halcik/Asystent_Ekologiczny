@@ -20,5 +20,5 @@
     <string name="label_purchase">Data zakupu</string>
     <string name="not_available">–</string>
     <string name="details_not_found">Produkt nie znaleziony</string>
-    <string name="category_updated">Kategoria zmieniona</string>
+    <string name="category_icon_desc">Ikona kategorii</string>
 </resources>

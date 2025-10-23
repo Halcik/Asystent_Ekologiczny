@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <!-- Ikona pieczywa: bochenek -->
+    <path android:fillColor="#c07938" android:pathData="M4,12c0,-4 3.5,-7 8,-7s8,3 8,7 -3.5,7 -8,7 -8,-3 -8,-7z"/>
+    <path android:fillColor="#e8b279" android:fillAlpha="0.7" android:pathData="M8,11c0,-1.5 2,-3 4,-3 2,0 4,1.5 4,3 0,2 -2,3.5 -4,3.5 -2,0 -4,-1.5 -4,-3.5z"/>
+    <path android:fillColor="#ffffff" android:fillAlpha="0.5" android:pathData="M10.2,9.8l0.6,0.4 -1.2,2.2 -0.6,-0.4zM13.2,9.8l0.6,0.4 -1.2,2.2 -0.6,-0.4z"/>
+</vector>
+

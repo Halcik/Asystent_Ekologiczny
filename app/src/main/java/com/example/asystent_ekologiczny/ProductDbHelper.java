@@ -139,11 +139,4 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         }
         return null;
     }
-
-    public int updateProductCategory(long id, String newCategory) {
-        SQLiteDatabase db = getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(COL_CATEGORY, newCategory);
-        return db.update(TABLE_PRODUCTS, cv, COL_ID + "=?", new String[]{String.valueOf(id)});
-    }
 }

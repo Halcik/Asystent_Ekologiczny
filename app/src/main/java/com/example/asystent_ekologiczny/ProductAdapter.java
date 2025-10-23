@@ -6,6 +6,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -78,6 +79,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
         holder.tvTitle.setText(p.getName());
         holder.tvTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        // Ustawienie ikony kategorii
+        holder.ivCategory.setImageResource(resolveCategoryIcon(p.getCategory()));
 
         String formattedPrice = priceFormat.format(p.getPrice()).replace('.', ',') + " zł";
         String subtitle = "Cena: " + formattedPrice;
@@ -133,13 +136,26 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         final TextView tvTitle;
         final TextView tvSubtitle;
         final TextView tvExtra;
+        final ImageView ivCategory; // nowa referencja
         ProductVH(@NonNull View itemView) {
             super(itemView);
             card = itemView.findViewById(R.id.card_product);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
             tvExtra = itemView.findViewById(R.id.tvExtra);
+            ivCategory = itemView.findViewById(R.id.ivCategory);
         }
+    }
+
+    private int resolveCategoryIcon(String category) {
+        if (category == null) return R.drawable.ic_category_other;
+        String c = category.trim().toLowerCase(Locale.getDefault());
+        if (c.contains("warzy")) return R.drawable.ic_category_vegetables; // warzywa
+        if (c.contains("owoc") || c.contains("jabł") || c.contains("jabl") || c.contains("banan") || c.contains("grusz") || c.contains("trusk")) return R.drawable.ic_category_fruits; // owoce
+        if (c.contains("nabia") || c.contains("mle")) return R.drawable.ic_category_dairy; // nabiał / mleko
+        if (c.contains("napoj") || c.contains("picia") || c.contains("drink") || c.contains("sok")) return R.drawable.ic_category_drinks; // napoje
+        if (c.contains("piec") || c.contains("chleb") || c.contains("bul") || c.contains("buł") || c.contains("bagiet")) return R.drawable.ic_category_bread; // pieczywo
+        return R.drawable.ic_category_other;
     }
 
     private Date stripTime(Date date) {
