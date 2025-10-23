@@ -25,4 +25,7 @@
     <color name="input_background">#FF2E2E2E</color>
     <color name="input_stroke">#FFBBBBBB</color>
     <color name="text_hint">#80FFFFFF</color>
+
+    <!-- Kolory paska narzędzi -->
+    <color name="toolbar_title">#FF212121</color>
 </resources>
