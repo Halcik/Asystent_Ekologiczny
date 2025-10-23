@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">Asystent_Ekologiczny</string>
+    <string name="back">Wstecz</string>
+    <string name="add_product_title">Dodaj produkt</string>
+    <string name="hint_name">Nazwa produktu</string>
+    <string name="hint_price">Cena (np. 4,50)</string>
+    <string name="hint_expiration">Data ważności (yyyy-MM-dd)</string>
+    <string name="hint_category">Kategoria</string>
+    <string name="hint_description">Opis</string>
+    <string name="hint_store">Sklep</string>
+    <string name="hint_purchase">Data zakupu (yyyy-MM-dd)</string>
+    <string name="save">Zapisz</string>
+    <string name="details_title">Szczegóły produktu</string>
+    <string name="label_name">Nazwa</string>
+    <string name="label_price">Cena</string>
+    <string name="label_expiration">Data ważności</string>
+    <string name="label_category">Kategoria</string>
+    <string name="label_description">Opis</string>
+    <string name="label_store">Sklep</string>
+    <string name="label_purchase">Data zakupu</string>
+    <string name="not_available">–</string>
+    <string name="details_not_found">Produkt nie znaleziony</string>
+    <string name="category_updated">Kategoria zmieniona</string>
 </resources>

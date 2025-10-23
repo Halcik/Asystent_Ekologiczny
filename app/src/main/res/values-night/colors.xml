@@ -20,4 +20,9 @@
     <!-- Inne używane -->
     <color name="teal_700">#018786</color>
     <color name="solid_blue">#1E2F36</color>
+
+    <!-- Kolory inputów i podpowiedzi -->
+    <color name="input_background">#FF2E2E2E</color>
+    <color name="input_stroke">#FFBBBBBB</color>
+    <color name="text_hint">#80FFFFFF</color>
 </resources>

@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 public class ProductDbHelper extends SQLiteOpenHelper {
@@ -65,8 +64,7 @@ public class ProductDbHelper extends SQLiteOpenHelper {
     public List<Product> getAllProducts() {
         List<Product> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
-        Cursor c = db.query(TABLE_PRODUCTS, null, null, null, null, null, COL_ID + " DESC");
-        try {
+        try (Cursor c = db.query(TABLE_PRODUCTS, null, null, null, null, null, COL_ID + " DESC")) {
             int idxId = c.getColumnIndexOrThrow(COL_ID);
             int idxName = c.getColumnIndexOrThrow(COL_NAME);
             int idxPrice = c.getColumnIndexOrThrow(COL_PRICE);
@@ -87,8 +85,6 @@ public class ProductDbHelper extends SQLiteOpenHelper {
                         c.getString(idxPurchase)
                 ));
             }
-        } finally {
-            c.close();
         }
         return list;
     }
@@ -96,28 +92,58 @@ public class ProductDbHelper extends SQLiteOpenHelper {
     public List<String> getDistinctCategories() {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
-        Cursor c = null;
-        try {
-            c = db.query(true, TABLE_PRODUCTS, new String[]{COL_CATEGORY}, COL_CATEGORY + " IS NOT NULL AND " + COL_CATEGORY + " != ''", null, null, null, COL_CATEGORY + " COLLATE NOCASE", null);
+        try (Cursor c = db.query(true, TABLE_PRODUCTS, new String[]{COL_CATEGORY}, COL_CATEGORY + " IS NOT NULL AND " + COL_CATEGORY + " != ''", null, null, null, COL_CATEGORY + " COLLATE NOCASE", null)) {
             while (c.moveToNext()) {
                 String val = c.getString(0);
                 if (val != null) list.add(val);
             }
-        } finally { if (c != null) c.close(); }
+        }
         return list;
     }
 
     public List<String> getDistinctStores() {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
-        Cursor c = null;
-        try {
-            c = db.query(true, TABLE_PRODUCTS, new String[]{COL_STORE}, COL_STORE + " IS NOT NULL AND " + COL_STORE + " != ''", null, null, null, COL_STORE + " COLLATE NOCASE", null);
+        try (Cursor c = db.query(true, TABLE_PRODUCTS, new String[]{COL_STORE}, COL_STORE + " IS NOT NULL AND " + COL_STORE + " != ''", null, null, null, COL_STORE + " COLLATE NOCASE", null)) {
             while (c.moveToNext()) {
                 String val = c.getString(0);
                 if (val != null) list.add(val);
             }
-        } finally { if (c != null) c.close(); }
+        }
         return list;
+    }
+
+    public Product getProductById(long id) {
+        SQLiteDatabase db = getReadableDatabase();
+        try (Cursor c = db.query(TABLE_PRODUCTS, null, COL_ID + "=?", new String[]{String.valueOf(id)}, null, null, null)) {
+            if (c.moveToFirst()) {
+                int idxId = c.getColumnIndexOrThrow(COL_ID);
+                int idxName = c.getColumnIndexOrThrow(COL_NAME);
+                int idxPrice = c.getColumnIndexOrThrow(COL_PRICE);
+                int idxExp = c.getColumnIndexOrThrow(COL_EXPIRATION);
+                int idxCat = c.getColumnIndexOrThrow(COL_CATEGORY);
+                int idxDesc = c.getColumnIndexOrThrow(COL_DESCRIPTION);
+                int idxStore = c.getColumnIndexOrThrow(COL_STORE);
+                int idxPurchase = c.getColumnIndexOrThrow(COL_PURCHASE_DATE);
+                return new Product(
+                        c.getLong(idxId),
+                        c.getString(idxName),
+                        c.getDouble(idxPrice),
+                        c.getString(idxExp),
+                        c.getString(idxCat),
+                        c.getString(idxDesc),
+                        c.getString(idxStore),
+                        c.getString(idxPurchase)
+                );
+            }
+        }
+        return null;
+    }
+
+    public int updateProductCategory(long id, String newCategory) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_CATEGORY, newCategory);
+        return db.update(TABLE_PRODUCTS, cv, COL_ID + "=?", new String[]{String.valueOf(id)});
     }
 }

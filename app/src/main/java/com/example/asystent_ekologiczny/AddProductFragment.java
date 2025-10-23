@@ -35,6 +35,7 @@ public class AddProductFragment extends Fragment {
     private ArrayAdapter<String> categoryAdapter;
     private ArrayAdapter<String> storeAdapter;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    private ProductDbHelper dbHelper; // dodane pole
 
     @Nullable
     @Override
@@ -66,9 +67,9 @@ public class AddProductFragment extends Fragment {
         // Domyślna data zakupu = dziś
         etPurchase.setText(dateFormat.format(new Date()));
 
-        ProductDbHelper helper = new ProductDbHelper(requireContext());
-        List<String> categories = new ArrayList<>(helper.getDistinctCategories());
-        List<String> stores = new ArrayList<>(helper.getDistinctStores());
+        dbHelper = new ProductDbHelper(requireContext());
+        List<String> categories = new ArrayList<>(dbHelper.getDistinctCategories());
+        List<String> stores = new ArrayList<>(dbHelper.getDistinctStores());
         categoryAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, categories);
         storeAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, stores);
         etCategory.setAdapter(categoryAdapter);
@@ -80,6 +81,14 @@ public class AddProductFragment extends Fragment {
 
         MaterialButton btnSave = view.findViewById(R.id.btn_save);
         btnSave.setOnClickListener(v -> saveProduct());
+
+        View backBtn = view.findViewById(R.id.btn_back);
+        if (backBtn != null) {
+            backBtn.setOnClickListener(v -> {
+                // Cofnięcie do poprzedniego fragmentu
+                requireActivity().getSupportFragmentManager().popBackStack();
+            });
+        }
     }
 
     private void showDatePicker(TextInputEditText target) {
@@ -138,19 +147,24 @@ public class AddProductFragment extends Fragment {
             } catch (ParseException ignored) {}
         }
 
-        if (!valid) return;
-
-        Product p = new Product(name, price, exp, category, description, store, purchase);
-        ProductDbHelper helper = new ProductDbHelper(requireContext());
-        long id = helper.insertProduct(p);
-        if (id > 0) {
-            addIfNew(categoryAdapter, category);
-            addIfNew(storeAdapter, store);
-            Toast.makeText(requireContext(), "Zapisano", Toast.LENGTH_SHORT).show();
-            requireActivity().getSupportFragmentManager().popBackStack();
-        } else {
-            Toast.makeText(requireContext(), "Błąd zapisu", Toast.LENGTH_SHORT).show();
+        if (valid) {
+            Product p = new Product(name, price, exp, category, description, store, purchase);
+            long id = dbHelper.insertProduct(p);
+            if (id > 0) {
+                addIfNew(categoryAdapter, category);
+                addIfNew(storeAdapter, store);
+                Toast.makeText(requireContext(), "Zapisano", Toast.LENGTH_SHORT).show();
+                requireActivity().getSupportFragmentManager().popBackStack();
+            } else {
+                Toast.makeText(requireContext(), "Błąd zapisu", Toast.LENGTH_SHORT).show();
+            }
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (dbHelper != null) { dbHelper.close(); dbHelper = null; }
     }
 
     private void addIfNew(ArrayAdapter<String> adapter, String value) {

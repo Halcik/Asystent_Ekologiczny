@@ -128,8 +128,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isAddProductVisible() {
-        Fragment f = getSupportFragmentManager().findFragmentByTag(AddProductFragment.TAG);
-        return f != null && f.isVisible();
+    private boolean isAddProductVisible() { // rozszerzone: sprawdza również szczegóły produktu
+        Fragment fAdd = getSupportFragmentManager().findFragmentByTag(AddProductFragment.TAG);
+        if (fAdd != null && fAdd.isVisible()) return true;
+        Fragment fDetails = getSupportFragmentManager().findFragmentByTag(ProductDetailsFragment.TAG);
+        return fDetails != null && fDetails.isVisible();
     }
 }

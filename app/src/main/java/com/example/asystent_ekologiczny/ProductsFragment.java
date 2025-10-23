@@ -131,6 +131,14 @@ public class ProductsFragment extends Fragment {
         card.setClickable(true);
         card.setPreventCornerOverlap(true);
         card.setContentPadding(24,24,24,24);
+        card.setOnClickListener(v -> {
+            ProductDetailsFragment fragment = ProductDetailsFragment.newInstance(p.getId());
+            FragmentTransaction ft = requireActivity().getSupportFragmentManager().beginTransaction();
+            ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, android.R.anim.fade_in, android.R.anim.fade_out);
+            ft.replace(R.id.fragment_container, fragment, ProductDetailsFragment.TAG);
+            ft.addToBackStack(ProductDetailsFragment.TAG);
+            ft.commit();
+        });
 
         LinearLayout inner = new LinearLayout(requireContext());
         inner.setOrientation(LinearLayout.VERTICAL);

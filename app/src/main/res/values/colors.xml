@@ -14,4 +14,8 @@
     <color name="card_border_success">#28a745</color>
     <!-- Jednolity błękitny KOLOR TŁA -->
     <color name="solid_blue">#DFF4FA</color>
+    <!-- Kolory dla pól formularza (jasny tryb) -->
+    <color name="input_background">#FFFFFFFF</color>
+    <color name="input_stroke">#FF000000</color>
+    <color name="text_hint">#99000000</color>
 </resources>
