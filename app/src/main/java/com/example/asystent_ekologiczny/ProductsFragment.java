@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.bottomnavigation.BottomNavigationView; // import dolnej nawigacji
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,7 +37,10 @@ public class ProductsFragment extends Fragment {
     private MaterialButtonToggleGroup viewModeToggle;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
     private boolean isGrid = false;
-    private int bottomExtraPaddingPx = 0; // dynamiczny padding
+    private int bottomExtraPaddingPx = 0;
+    private boolean suppressNextFullReload = false; // flaga pomijająca pełne odświeżenie po dodaniu
+    private int totalCount = 0; // nowe liczniki
+    private int expiringCount = 0;
 
     @Nullable
     @Override
@@ -62,14 +65,14 @@ public class ProductsFragment extends Fragment {
         }
         applyLayoutManager();
         adapter = new ProductAdapter((FragmentActivity) requireActivity(), new java.util.ArrayList<>());
+        adapter.setGridMode(isGrid); // ustawienia paddings
         recyclerView.setAdapter(adapter);
+        recyclerView.setItemAnimator(new FadeInItemAnimator()); // animator fade-in dla dodawania
 
-        // Ustaw dolny padding po zmierzeniu BottomNavigationView
         BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottom_navigation);
         if (bottomNav != null) {
             bottomNav.post(() -> {
                 int navHeight = bottomNav.getHeight();
-                // dodatkowy bufor 8dp
                 bottomExtraPaddingPx = (int) (getResources().getDisplayMetrics().density * 8) + navHeight;
                 applyBottomPadding();
             });
@@ -83,19 +86,32 @@ public class ProductsFragment extends Fragment {
                     if (newGrid != isGrid) {
                         isGrid = newGrid;
                         applyLayoutManager();
+                        adapter.setGridMode(isGrid);
                         requireActivity().invalidateOptionsMenu();
                     }
                 }
             });
         }
         loadProducts();
+
+        // Listener na wynik dodania produktu – używamy viewLifecycleOwner aby uniknąć wywołań po zniszczeniu widoku
+        getParentFragmentManager().setFragmentResultListener("product_added", getViewLifecycleOwner(), (key, bundle) -> {
+            long newId = bundle.getLong("newProductId", -1);
+            if (newId != -1) {
+                addNewProduct(newId); // fade-in
+            }
+        });
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        applyBottomPadding(); // upewnij się że padding nie zniknął
-        loadProducts();
+        applyBottomPadding();
+        if (suppressNextFullReload) {
+            suppressNextFullReload = false; // pomijamy jednorazowo
+        } else {
+            loadProducts();
+        }
     }
 
     @Override
@@ -116,7 +132,7 @@ public class ProductsFragment extends Fragment {
     private void loadProducts() {
         if (adapter == null) return;
         List<Product> products = dbHelper.getAllProducts();
-        int expiringCount = 0;
+        int newExpiring = 0;
         Date today = stripTime(new Date());
         for (Product p : products) {
             if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
@@ -124,14 +140,15 @@ public class ProductsFragment extends Fragment {
                     Date exp = dateFormat.parse(p.getExpirationDate());
                     if (exp != null) {
                         long days = (exp.getTime() - today.getTime()) / (1000L*60*60*24);
-                        if (days <= 3) expiringCount++;
+                        if (days <= 3) newExpiring++;
                     }
                 } catch (ParseException ignored) {}
             }
         }
         adapter.replaceData(products);
-        tvTotal.setText(String.valueOf(products.size()));
-        tvExpiring.setText(String.valueOf(expiringCount));
+        totalCount = products.size();
+        expiringCount = newExpiring;
+        updateCounters();
     }
 
     private Date stripTime(Date date) {
@@ -156,13 +173,12 @@ public class ProductsFragment extends Fragment {
         while (recyclerView.getItemDecorationCount() > 0) {
             recyclerView.removeItemDecorationAt(0);
         }
-        int spacingPx = (int) (getResources().getDisplayMetrics().density * 8); // zmniejszone odstępy 8dp
+        int spacingPx = (int) (getResources().getDisplayMetrics().density * 8);
         recyclerView.addItemDecoration(new ProductSpacingDecoration(spacingPx, isGrid, isGrid ? 2 : 1));
     }
 
     private void applyBottomPadding() {
         if (recyclerView == null) return;
-        // Zachowaj istniejące górne/stronne paddingi, zmień tylko dolny
         recyclerView.setClipToPadding(false);
         recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(), recyclerView.getPaddingRight(), bottomExtraPaddingPx);
     }
@@ -170,6 +186,7 @@ public class ProductsFragment extends Fragment {
     public void toggleLayout() {
         isGrid = !isGrid;
         applyLayoutManager();
+        adapter.setGridMode(isGrid);
         if (viewModeToggle != null) {
             viewModeToggle.check(isGrid ? R.id.btn_view_grid : R.id.btn_view_list);
         }
@@ -177,4 +194,61 @@ public class ProductsFragment extends Fragment {
     }
 
     public boolean isGridMode() { return isGrid; }
+
+    // NOWA METODA: wstawia pojedynczy produkt z animacją
+    public void addNewProduct(long id) {
+        if (!isAdded()) return;
+        Product p = dbHelper.getProductById(id);
+        if (p == null || adapter == null) return;
+        adapter.addProductAtTop(p);
+        totalCount += 1;
+        if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
+            try {
+                Date exp = dateFormat.parse(p.getExpirationDate());
+                Date today = stripTime(new Date());
+                if (exp != null) {
+                    long days = (exp.getTime() - today.getTime()) / (1000L*60*60*24);
+                    if (days <= 3) {
+                        expiringCount += 1;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        updateCounters();
+        suppressNextFullReload = true;
+        animateFirstItem(); // ręczna animacja
+    }
+
+    private void animateFirstItem() {
+        if (recyclerView == null) return;
+        recyclerView.post(() -> {
+            if (recyclerView == null) return;
+            RecyclerView.ViewHolder vh = recyclerView.findViewHolderForAdapterPosition(0);
+            if (vh == null) {
+                // Spróbuj po krótkim opóźnieniu jeśli jeszcze nie zlayoutowane
+                recyclerView.postDelayed(this::animateFirstItem, 32);
+                return;
+            }
+            View v = vh.itemView;
+            v.setAlpha(0f);
+            v.setTranslationY(dp(36));
+            v.setScaleX(0.95f);
+            v.setScaleY(0.95f);
+            v.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(280)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+        });
+    }
+    private int dp(int d) { return (int)(getResources().getDisplayMetrics().density * d); }
+
+    private void updateCounters() {
+        if (!isAdded()) return;
+        tvTotal.setText(String.valueOf(totalCount));
+        tvExpiring.setText(String.valueOf(expiringCount));
+    }
 }

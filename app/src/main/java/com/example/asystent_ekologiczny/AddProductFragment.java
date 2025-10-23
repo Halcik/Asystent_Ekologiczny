@@ -154,6 +154,10 @@ public class AddProductFragment extends Fragment {
                 addIfNew(categoryAdapter, category);
                 addIfNew(storeAdapter, store);
                 Toast.makeText(requireContext(), "Zapisano", Toast.LENGTH_SHORT).show();
+                // Wysłanie wyniku do ProductsFragment (fade-in)
+                Bundle result = new Bundle();
+                result.putLong("newProductId", id);
+                requireActivity().getSupportFragmentManager().setFragmentResult("product_added", result);
                 requireActivity().getSupportFragmentManager().popBackStack();
             } else {
                 Toast.makeText(requireContext(), "Błąd zapisu", Toast.LENGTH_SHORT).show();

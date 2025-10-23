@@ -30,12 +30,13 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
     private final DecimalFormat priceFormat = new DecimalFormat("0.00");
     private final FragmentActivity activity;
-    private boolean gridMode = false; // nowy stan widoku
+    private boolean gridMode = false; // zachowane
 
     public ProductAdapter(FragmentActivity activity, List<Product> products) {
         this.activity = activity;
         this.products = new ArrayList<>(products); // kopia danych
         dateFormat.setLenient(false);
+        setHasStableIds(true); // stabilne ID dla bezpiecznych animacji
     }
 
     @NonNull
@@ -99,6 +100,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     @Override
     public int getItemCount() { return products.size(); }
 
+    @Override
+    public long getItemId(int position) {
+        if (position < 0 || position >= products.size()) return RecyclerView.NO_ID;
+        return products.get(position).getId();
+    }
+
     public void replaceData(List<Product> newProducts) {
         products.clear();
         products.addAll(newProducts);
@@ -110,6 +117,15 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             this.gridMode = grid;
             notifyDataSetChanged(); // odśwież karty z nowym paddingiem
         }
+    }
+
+    public void addProductAtTop(Product p) {
+        if (p == null) return;
+        for (Product existing : products) {
+            if (existing.getId() == p.getId()) return; // duplikat
+        }
+        products.add(0, p);
+        notifyItemInserted(0);
     }
 
     static class ProductVH extends RecyclerView.ViewHolder {
