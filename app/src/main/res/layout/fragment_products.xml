@@ -13,7 +13,7 @@
         android:paddingBottom="@dimen/content_bottom_padding"
         android:layout_marginBottom="@dimen/scroll_bottom_margin"
         android:clipToPadding="false"
-        android:background="@android:color/background_light">
+        android:background="@color/solid_blue">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -25,13 +25,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Produkty Domowe"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                android:textColor="@color/text_primary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Śledź daty ważności i koszty, aby unikać marnowania żywności" />
+                android:text="Śledź daty ważności i koszty, aby unikać marnowania żywności"
+                android:textColor="@color/text_secondary" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -45,7 +47,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    app:cardBackgroundColor="@color/card_background_ok">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -59,11 +62,13 @@
                             android:layout_height="wrap_content"
                             android:text="0"
                             android:textSize="22sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary" />
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Produktów"/>
+                            android:text="Produktów"
+                            android:textColor="@color/text_secondary" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -72,7 +77,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    app:cardBackgroundColor="@color/card_background_ok">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -86,11 +92,13 @@
                             android:layout_height="wrap_content"
                             android:text="0"
                             android:textSize="22sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary" />
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Tracą ważność"/>
+                            android:text="Tracą ważność"
+                            android:textColor="@color/text_secondary" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -100,7 +108,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Lista produktów:"/>
+                android:text="Lista produktów:"
+                android:textColor="@color/text_primary" />
 
             <LinearLayout
                 android:id="@+id/products_list"
@@ -109,7 +118,6 @@
                 android:orientation="vertical"
                 android:layout_marginTop="8dp"/>
 
-            <!-- Dystans na samym dole jako dodatkowe zabezpieczenie przed zasłonięciem -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/list_end_spacer" />

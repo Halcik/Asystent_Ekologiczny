@@ -102,7 +102,9 @@ public class ProductsFragment extends Fragment {
 
     private void addProductCard(Product p, Date today) {
         if (getContext() == null) return;
+        // Określamy kolor ramki na podstawie daty ważności
         int colorRes = R.color.card_border_success; // default
+        int colorCard = R.color.card_background_ok;
         if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
             try {
                 Date exp = dateFormat.parse(p.getExpirationDate());
@@ -110,6 +112,7 @@ public class ProductsFragment extends Fragment {
                     long days = (exp.getTime() - today.getTime()) / (1000L*60*60*24);
                     if (days < 0) {
                         colorRes = R.color.card_border_danger;
+                        colorCard = R.color.card_background_danger;
                     } else if (days <= 3) {
                         colorRes = R.color.card_border_warning;
                     }
@@ -122,8 +125,9 @@ public class ProductsFragment extends Fragment {
         card.setLayoutParams(params);
         card.setStrokeWidth((int) (getResources().getDisplayMetrics().density * 3));
         card.setStrokeColor(ContextCompat.getColor(requireContext(), colorRes));
-        card.setCardElevation(4f);
+        //card.setCardElevation(1f);
         card.setUseCompatPadding(true);
+        card.setCardBackgroundColor(ContextCompat.getColor(requireContext(), colorCard));
         card.setClickable(true);
         card.setPreventCornerOverlap(true);
         card.setContentPadding(24,24,24,24);
@@ -135,6 +139,8 @@ public class ProductsFragment extends Fragment {
         tvTitle.setText(p.getName());
         tvTitle.setTypeface(Typeface.DEFAULT_BOLD);
         tvTitle.setTextSize(16);
+        // Ustawienie koloru tekstu (dostosuje się do trybu dnia/nocy)
+        tvTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
 
         TextView tvSubtitle = new TextView(requireContext());
         String formattedPrice = priceFormat.format(p.getPrice()).replace('.', ',') + " zł"; // poprawiony format
@@ -142,11 +148,13 @@ public class ProductsFragment extends Fragment {
         if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) subtitle += "  •  Ważność: " + p.getExpirationDate();
         tvSubtitle.setText(subtitle);
         tvSubtitle.setTextSize(13);
+        tvSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
 
         TextView tvExtra = new TextView(requireContext());
         String extra = (p.getCategory() == null ? "" : p.getCategory()) + (p.getStore()==null?"" : ("  •  " + p.getStore()));
         tvExtra.setText(extra.trim());
         tvExtra.setTextSize(12);
+        tvExtra.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
 
         inner.addView(tvTitle);
         inner.addView(tvSubtitle);
