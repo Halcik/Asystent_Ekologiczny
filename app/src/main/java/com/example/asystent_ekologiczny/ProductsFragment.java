@@ -1,22 +1,23 @@
 package com.example.asystent_ekologiczny;
 
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.bottomnavigation.BottomNavigationView; // import dolnej nawigacji
 
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -26,13 +27,17 @@ import java.util.Locale;
 
 public class ProductsFragment extends Fragment {
     public static final String TAG = "ProductsFragment";
+    private static final String KEY_GRID = "grid_mode";
 
     private ProductDbHelper dbHelper;
-    private LinearLayout listLayout;
+    private RecyclerView recyclerView;
+    private ProductAdapter adapter;
     private TextView tvTotal;
     private TextView tvExpiring;
+    private MaterialButtonToggleGroup viewModeToggle;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-    private final DecimalFormat priceFormat = new DecimalFormat("0.00");
+    private boolean isGrid = false;
+    private int bottomExtraPaddingPx = 0; // dynamiczny padding
 
     @Nullable
     @Override
@@ -44,35 +49,74 @@ public class ProductsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         dbHelper = new ProductDbHelper(requireContext());
-        listLayout = view.findViewById(R.id.products_list);
+        recyclerView = view.findViewById(R.id.products_list);
         tvTotal = view.findViewById(R.id.products_total);
         tvExpiring = view.findViewById(R.id.products_expiring);
+        viewModeToggle = view.findViewById(R.id.view_mode_toggle);
         FloatingActionButton fab = view.findViewById(R.id.fab_add_product);
         fab.setOnClickListener(v -> openAddProduct());
         dateFormat.setLenient(false);
+
+        if (savedInstanceState != null) {
+            isGrid = savedInstanceState.getBoolean(KEY_GRID, false);
+        }
+        applyLayoutManager();
+        adapter = new ProductAdapter((FragmentActivity) requireActivity(), new java.util.ArrayList<>());
+        recyclerView.setAdapter(adapter);
+
+        // Ustaw dolny padding po zmierzeniu BottomNavigationView
+        BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottom_navigation);
+        if (bottomNav != null) {
+            bottomNav.post(() -> {
+                int navHeight = bottomNav.getHeight();
+                // dodatkowy bufor 8dp
+                bottomExtraPaddingPx = (int) (getResources().getDisplayMetrics().density * 8) + navHeight;
+                applyBottomPadding();
+            });
+        }
+
+        if (viewModeToggle != null) {
+            viewModeToggle.check(isGrid ? R.id.btn_view_grid : R.id.btn_view_list);
+            viewModeToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                if (isChecked) {
+                    boolean newGrid = checkedId == R.id.btn_view_grid;
+                    if (newGrid != isGrid) {
+                        isGrid = newGrid;
+                        applyLayoutManager();
+                        requireActivity().invalidateOptionsMenu();
+                    }
+                }
+            });
+        }
         loadProducts();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        applyBottomPadding(); // upewnij się że padding nie zniknął
         loadProducts();
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_GRID, isGrid);
     }
 
     private void openAddProduct() {
         AddProductFragment fragment = new AddProductFragment();
-        FragmentTransaction ft = requireActivity().getSupportFragmentManager().beginTransaction();
-        ft.setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right, android.R.anim.slide_in_left, android.R.anim.slide_out_right);
-        ft.replace(R.id.fragment_container, fragment, AddProductFragment.TAG);
-        ft.addToBackStack(AddProductFragment.TAG);
-        ft.commit();
+        requireActivity().getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+                .replace(R.id.fragment_container, fragment, AddProductFragment.TAG)
+                .addToBackStack(AddProductFragment.TAG)
+                .commit();
     }
 
     private void loadProducts() {
-        if (listLayout == null) return;
-        listLayout.removeAllViews();
+        if (adapter == null) return;
         List<Product> products = dbHelper.getAllProducts();
-        int expiringCount = 0; // liczymy wszystko co ma <=3 dni do końca lub już po terminie
+        int expiringCount = 0;
         Date today = stripTime(new Date());
         for (Product p : products) {
             if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
@@ -80,12 +124,12 @@ public class ProductsFragment extends Fragment {
                     Date exp = dateFormat.parse(p.getExpirationDate());
                     if (exp != null) {
                         long days = (exp.getTime() - today.getTime()) / (1000L*60*60*24);
-                        if (days <= 3) expiringCount++; // zawiera też wartości ujemne (po terminie)
+                        if (days <= 3) expiringCount++;
                     }
                 } catch (ParseException ignored) {}
             }
-            addProductCard(p, today);
         }
+        adapter.replaceData(products);
         tvTotal.setText(String.valueOf(products.size()));
         tvExpiring.setText(String.valueOf(expiringCount));
     }
@@ -100,75 +144,37 @@ public class ProductsFragment extends Fragment {
         return cal.getTime();
     }
 
-    private void addProductCard(Product p, Date today) {
-        if (getContext() == null) return;
-        // Określamy kolor ramki na podstawie daty ważności
-        int colorRes = R.color.card_border_success; // default
-        int colorCard = R.color.card_background_ok;
-        if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
-            try {
-                Date exp = dateFormat.parse(p.getExpirationDate());
-                if (exp != null) {
-                    long days = (exp.getTime() - today.getTime()) / (1000L*60*60*24);
-                    if (days < 0) {
-                        colorRes = R.color.card_border_danger;
-                        colorCard = R.color.card_background_danger;
-                    } else if (days <= 3) {
-                        colorRes = R.color.card_border_warning;
-                    }
-                }
-            } catch (ParseException ignored) {}
-        }
-        com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(requireContext());
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.topMargin = (int) (getResources().getDisplayMetrics().density * 8);
-        card.setLayoutParams(params);
-        card.setStrokeWidth((int) (getResources().getDisplayMetrics().density * 3));
-        card.setStrokeColor(ContextCompat.getColor(requireContext(), colorRes));
-        //card.setCardElevation(1f);
-        card.setUseCompatPadding(true);
-        card.setCardBackgroundColor(ContextCompat.getColor(requireContext(), colorCard));
-        card.setClickable(true);
-        card.setPreventCornerOverlap(true);
-        card.setContentPadding(24,24,24,24);
-        card.setOnClickListener(v -> {
-            ProductDetailsFragment fragment = ProductDetailsFragment.newInstance(p.getId());
-            FragmentTransaction ft = requireActivity().getSupportFragmentManager().beginTransaction();
-            ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, android.R.anim.fade_in, android.R.anim.fade_out);
-            ft.replace(R.id.fragment_container, fragment, ProductDetailsFragment.TAG);
-            ft.addToBackStack(ProductDetailsFragment.TAG);
-            ft.commit();
-        });
-
-        LinearLayout inner = new LinearLayout(requireContext());
-        inner.setOrientation(LinearLayout.VERTICAL);
-
-        TextView tvTitle = new TextView(requireContext());
-        tvTitle.setText(p.getName());
-        tvTitle.setTypeface(Typeface.DEFAULT_BOLD);
-        tvTitle.setTextSize(16);
-        // Ustawienie koloru tekstu (dostosuje się do trybu dnia/nocy)
-        tvTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
-
-        TextView tvSubtitle = new TextView(requireContext());
-        String formattedPrice = priceFormat.format(p.getPrice()).replace('.', ',') + " zł"; // poprawiony format
-        String subtitle = "Cena: " + formattedPrice;
-        if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) subtitle += "  •  Ważność: " + p.getExpirationDate();
-        tvSubtitle.setText(subtitle);
-        tvSubtitle.setTextSize(13);
-        tvSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
-
-        TextView tvExtra = new TextView(requireContext());
-        String extra = (p.getCategory() == null ? "" : p.getCategory()) + (p.getStore()==null?"" : ("  •  " + p.getStore()));
-        tvExtra.setText(extra.trim());
-        tvExtra.setTextSize(12);
-        tvExtra.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
-
-        inner.addView(tvTitle);
-        inner.addView(tvSubtitle);
-        inner.addView(tvExtra);
-
-        card.addView(inner);
-        listLayout.addView(card);
+    private void applyLayoutManager() {
+        if (recyclerView == null) return;
+        RecyclerView.LayoutManager lm = isGrid ? new GridLayoutManager(getContext(), 2) : new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(lm);
+        refreshItemDecoration();
     }
+
+    private void refreshItemDecoration() {
+        if (recyclerView == null) return;
+        while (recyclerView.getItemDecorationCount() > 0) {
+            recyclerView.removeItemDecorationAt(0);
+        }
+        int spacingPx = (int) (getResources().getDisplayMetrics().density * 8); // zmniejszone odstępy 8dp
+        recyclerView.addItemDecoration(new ProductSpacingDecoration(spacingPx, isGrid, isGrid ? 2 : 1));
+    }
+
+    private void applyBottomPadding() {
+        if (recyclerView == null) return;
+        // Zachowaj istniejące górne/stronne paddingi, zmień tylko dolny
+        recyclerView.setClipToPadding(false);
+        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(), recyclerView.getPaddingRight(), bottomExtraPaddingPx);
+    }
+
+    public void toggleLayout() {
+        isGrid = !isGrid;
+        applyLayoutManager();
+        if (viewModeToggle != null) {
+            viewModeToggle.check(isGrid ? R.id.btn_view_grid : R.id.btn_view_list);
+        }
+        requireActivity().invalidateOptionsMenu();
+    }
+
+    public boolean isGridMode() { return isGrid; }
 }
