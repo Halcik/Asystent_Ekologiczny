@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Asystent_Ekologiczny</string>
+    <string name="app_name">Asystent Ekologiczny</string>
     <string name="back">Wstecz</string>
     <string name="add_product_title">Dodaj produkt</string>
     <string name="hint_name">Nazwa produktu</string>

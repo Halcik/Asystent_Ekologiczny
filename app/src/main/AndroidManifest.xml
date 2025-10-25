@@ -13,6 +13,7 @@
         android:theme="@style/Theme.Asystent_Ekologiczny">
         <activity
             android:name=".MainActivity"
+            android:windowSoftInputMode="adjustNothing"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
