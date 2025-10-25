@@ -4,7 +4,11 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
+
+import android.text.TextWatcher;
+import android.text.Editable;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,6 +35,7 @@ public class ProductsFragment extends Fragment {
     private static final String KEY_GRID = "grid_mode";
     private static final String KEY_SORT_ACTIVE = "sort_active";
     private static final String KEY_SORT_ASC = "sort_asc";
+    private static final String KEY_SEARCH_VISIBLE = "search_visible";
 
     private ProductDbHelper dbHelper;
     private RecyclerView recyclerView;
@@ -47,6 +52,12 @@ public class ProductsFragment extends Fragment {
     private boolean priceSortActive = false; // czy aktywne sortowanie po cenie
     private boolean priceSortAscending = true; // kierunek sortowania
     private MaterialButton btnSortPrice; // przycisk sortowania
+    private EditText searchInput;
+    private String currentQuery = "";
+    private java.util.List<Product> allProducts = new java.util.ArrayList<>();
+    private View searchContainer;
+    private View btnSearchToggle;
+    private View btnSearchClear;
 
     @Nullable
     @Override
@@ -76,6 +87,12 @@ public class ProductsFragment extends Fragment {
             isGrid = savedInstanceState.getBoolean(KEY_GRID, false);
             priceSortActive = savedInstanceState.getBoolean(KEY_SORT_ACTIVE, false);
             priceSortAscending = savedInstanceState.getBoolean(KEY_SORT_ASC, true);
+            boolean vis = savedInstanceState.getBoolean(KEY_SEARCH_VISIBLE, false);
+            if (vis) {
+                // pokaż bez animacji i przywróć zapytanie
+                searchContainer.setVisibility(View.VISIBLE);
+                btnSearchToggle.setVisibility(View.GONE);
+            }
         }
         applyLayoutManager();
         adapter = new ProductAdapter((FragmentActivity) requireActivity(), new java.util.ArrayList<>());
@@ -130,6 +147,39 @@ public class ProductsFragment extends Fragment {
                 return true;
             });
         }
+        searchInput = view.findViewById(R.id.search_input);
+        if (searchInput != null) {
+            searchInput.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    currentQuery = s == null ? "" : s.toString().trim();
+                    applyFilterAndDisplay();
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
+        btnSearchToggle = view.findViewById(R.id.btn_search_toggle);
+        searchContainer = view.findViewById(R.id.search_container);
+        btnSearchClear = view.findViewById(R.id.btn_search_clear);
+        if (savedInstanceState != null) {
+            boolean vis = savedInstanceState.getBoolean(KEY_SEARCH_VISIBLE, false);
+            if (vis) {
+                // pokaż bez animacji i przywróć zapytanie
+                searchContainer.setVisibility(View.VISIBLE);
+                btnSearchToggle.setVisibility(View.GONE);
+            }
+        }
+        if (btnSearchToggle != null) {
+            btnSearchToggle.setOnClickListener(v -> expandSearch(true));
+        }
+        if (btnSearchClear != null) {
+            btnSearchClear.setOnClickListener(v -> {
+                if (searchInput != null) {
+                    searchInput.setText("");
+                }
+                collapseSearch(true);
+            });
+        }
         loadProducts();
 
         // Listener na wynik dodania produktu – używamy viewLifecycleOwner aby uniknąć wywołań po zniszczeniu widoku
@@ -158,6 +208,7 @@ public class ProductsFragment extends Fragment {
         outState.putBoolean(KEY_GRID, isGrid);
         outState.putBoolean(KEY_SORT_ACTIVE, priceSortActive);
         outState.putBoolean(KEY_SORT_ASC, priceSortAscending);
+        outState.putBoolean(KEY_SEARCH_VISIBLE, searchContainer != null && searchContainer.getVisibility() == View.VISIBLE);
     }
 
     private void openAddProduct() {
@@ -171,7 +222,9 @@ public class ProductsFragment extends Fragment {
 
     private void loadProducts() {
         if (adapter == null) return;
-        List<Product> products = dbHelper.getAllProducts();
+        java.util.List<Product> products = dbHelper.getAllProducts();
+        allProducts.clear();
+        allProducts.addAll(products);
         int newExpiring = 0;
         Date today = stripTime(new Date());
         for (Product p : products) {
@@ -185,13 +238,31 @@ public class ProductsFragment extends Fragment {
                 } catch (ParseException ignored) {}
             }
         }
-        adapter.replaceData(products);
+        // Nie ustawiamy danych bezpośrednio – filtr zastosuje właściwą listę
+        totalCount = allProducts.size();
+        expiringCount = newExpiring;
+        updateCounters();
+        applyFilterAndDisplay();
+    }
+
+    private void applyFilterAndDisplay() {
+        if (adapter == null) return;
+        String q = currentQuery.toLowerCase(java.util.Locale.getDefault());
+        java.util.List<Product> filtered;
+        if (q.isEmpty()) {
+            filtered = new java.util.ArrayList<>(allProducts);
+        } else {
+            filtered = new java.util.ArrayList<>();
+            for (Product p : allProducts) {
+                if (p.getName() != null && p.getName().toLowerCase(java.util.Locale.getDefault()).contains(q)) {
+                    filtered.add(p);
+                }
+            }
+        }
+        adapter.replaceData(filtered);
         if (priceSortActive) {
             adapter.sortByPrice(priceSortAscending);
         }
-        totalCount = products.size();
-        expiringCount = newExpiring;
-        updateCounters();
     }
 
     private Date stripTime(Date date) {
@@ -231,14 +302,8 @@ public class ProductsFragment extends Fragment {
         if (!isAdded()) return;
         Product p = dbHelper.getProductById(id);
         if (p == null || adapter == null) return;
-        if (priceSortActive) {
-            // jeśli sortowanie aktywne – dodaj na koniec i przesortuj cały zbiór
-            adapter.addProductAtTop(p); // wstaw tymczasowo
-            adapter.sortByPrice(priceSortAscending); // uporządkuj ponownie
-        } else {
-            adapter.addProductAtTop(p);
-            animateFirstItem(); // animacja tylko przy braku sortowania (bo w sortowaniu mogłaby zmienić miejsce)
-        }
+        // Dodaj do pełnej listy źródłowej
+        allProducts.add(0, p); // na początku listy źródłowej (bo domyślny porządek to ID DESC)
         totalCount += 1;
         if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
             try {
@@ -254,8 +319,15 @@ public class ProductsFragment extends Fragment {
         }
         updateCounters();
         suppressNextFullReload = true;
-        if (!priceSortActive) {
-            // animacja już wykonana jeśli brak sortowania
+
+        boolean canAnimateDirect = currentQuery.isEmpty() && !priceSortActive;
+        if (canAnimateDirect) {
+            // bez filtra i sortowania – szybka ścieżka z animacją
+            adapter.addProductAtTop(p);
+            animateFirstItem();
+        } else {
+            // w innym wypadku – przefiltruj / posortuj ponownie
+            applyFilterAndDisplay();
         }
     }
 
@@ -294,17 +366,57 @@ public class ProductsFragment extends Fragment {
 
     private void updateSortButtonUi() {
         if (btnSortPrice == null) return;
+        btnSortPrice.setText("Cena"); // zawsze tylko słowo 'Cena'
         if (!priceSortActive) {
-            btnSortPrice.setText("Cena");
-            btnSortPrice.setIcon(null); // brak ikony w stanie nieaktywnym
+            btnSortPrice.setIcon(null);
         } else {
-            if (priceSortAscending) {
-                btnSortPrice.setText("Cena ↑");
-                btnSortPrice.setIcon(requireContext().getDrawable(android.R.drawable.arrow_up_float));
-            } else {
-                btnSortPrice.setText("Cena ↓");
-                btnSortPrice.setIcon(requireContext().getDrawable(android.R.drawable.arrow_down_float));
-            }
+            int iconRes = priceSortAscending ? R.drawable.ic_arrow_up_bold : R.drawable.ic_arrow_down_bold;
+            btnSortPrice.setIcon(requireContext().getDrawable(iconRes));
+        }
+    }
+
+    private void expandSearch(boolean animate) {
+        if (searchContainer == null || btnSearchToggle == null) return;
+        if (searchContainer.getVisibility() == View.VISIBLE) return;
+        searchContainer.setVisibility(View.VISIBLE);
+        btnSearchToggle.setVisibility(View.GONE);
+        if (animate) {
+            searchContainer.setAlpha(0f);
+            searchContainer.setScaleX(0.85f);
+            searchContainer.setScaleY(0.85f);
+            searchContainer.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(180)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+        }
+        if (searchInput != null) {
+            searchInput.requestFocus();
+        }
+    }
+
+    private void collapseSearch(boolean animate) {
+        if (searchContainer == null || btnSearchToggle == null) return;
+        if (searchContainer.getVisibility() != View.VISIBLE) return;
+        if (animate) {
+            searchContainer.animate()
+                    .alpha(0f)
+                    .scaleX(0.85f)
+                    .scaleY(0.85f)
+                    .setDuration(140)
+                    .withEndAction(() -> {
+                        searchContainer.setVisibility(View.GONE);
+                        searchContainer.setAlpha(1f);
+                        searchContainer.setScaleX(1f);
+                        searchContainer.setScaleY(1f);
+                        btnSearchToggle.setVisibility(View.VISIBLE);
+                    })
+                    .start();
+        } else {
+            searchContainer.setVisibility(View.GONE);
+            btnSearchToggle.setVisibility(View.VISIBLE);
         }
     }
 }

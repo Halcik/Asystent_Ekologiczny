@@ -1,12 +1,17 @@
 package com.example.asystent_ekologiczny;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable; // dodane
 import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -32,6 +37,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     private final DecimalFormat priceFormat = new DecimalFormat("0.00");
     private final FragmentActivity activity;
     private boolean gridMode = false; // zachowane
+    private static PopupWindow activeTooltip; // jeden aktywny popup globalnie
 
     public ProductAdapter(FragmentActivity activity, List<Product> products) {
         this.activity = activity;
@@ -98,6 +104,56 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                     .addToBackStack(ProductDetailsFragment.TAG)
                     .commit();
         });
+        holder.card.setOnLongClickListener(v -> {
+            String purchase = p.getPurchaseDate();
+            String msg = (purchase != null && !purchase.isEmpty()) ? ("Data zakupu: " + purchase) : "Brak daty zakupu";
+            showPurchaseTooltip(holder.tvTitle, holder.card, msg);
+            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            return true;
+        });
+    }
+
+    private void showPurchaseTooltip(View anchorTitle, View cardView, String message) {
+        if (activeTooltip != null) { activeTooltip.dismiss(); activeTooltip = null; }
+        View content = LayoutInflater.from(anchorTitle.getContext()).inflate(R.layout.tooltip_purchase_date, null, false);
+        TextView tv = content.findViewById(R.id.tv_tooltip_text);
+        tv.setText(message);
+        PopupWindow pw = new PopupWindow(content, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        pw.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        pw.setOutsideTouchable(true);
+
+        int[] titleLoc = new int[2];
+        anchorTitle.getLocationOnScreen(titleLoc); // lewy górny rożek tytułu
+        int[] cardLoc = new int[2];
+        cardView.getLocationOnScreen(cardLoc); // lewy górny rożek karty
+
+        Rect displayFrame = new Rect();
+        anchorTitle.getWindowVisibleDisplayFrame(displayFrame);
+        content.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int pwW = content.getMeasuredWidth();
+        int pwH = content.getMeasuredHeight();
+        int titleH = anchorTitle.getHeight();
+        int cardW = cardView.getWidth();
+
+        // Poziomo: środek karty
+        int x = cardLoc[0] + (cardW / 2) - (pwW / 2);
+        // Pionowo: wycentrowane względem środka nazwy
+        int titleCenterY = titleLoc[1] + (titleH / 2);
+        int y = titleCenterY - (pwH / 2);
+
+        // Ograniczenia ekranu
+        int minX = displayFrame.left + dpToPx(anchorTitle.getContext(),4);
+        int maxX = displayFrame.right - pwW - dpToPx(anchorTitle.getContext(),4);
+        if (x < minX) x = minX;
+        if (x > maxX) x = maxX;
+        int minY = displayFrame.top + dpToPx(anchorTitle.getContext(),4);
+        int maxY = displayFrame.bottom - pwH - dpToPx(anchorTitle.getContext(),4);
+        if (y < minY) y = minY;
+        if (y > maxY) y = maxY;
+
+        pw.showAtLocation(anchorTitle.getRootView(), Gravity.NO_GRAVITY, x, y);
+        activeTooltip = pw;
+        anchorTitle.postDelayed(() -> { if (activeTooltip == pw) { pw.dismiss(); activeTooltip = null; } }, 2500);
     }
 
     @Override
