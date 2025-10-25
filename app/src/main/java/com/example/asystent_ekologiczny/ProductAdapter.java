@@ -131,6 +131,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         notifyItemInserted(0);
     }
 
+    public void sortByPrice(boolean ascending) {
+        java.util.Collections.sort(products, (a, b) -> {
+            if (ascending) return Double.compare(a.getPrice(), b.getPrice());
+            return Double.compare(b.getPrice(), a.getPrice());
+        });
+        notifyDataSetChanged();
+    }
+
     static class ProductVH extends RecyclerView.ViewHolder {
         final MaterialCardView card;
         final TextView tvTitle;

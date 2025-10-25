@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.button.MaterialButton; // dodane
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -28,6 +29,8 @@ import java.util.Locale;
 public class ProductsFragment extends Fragment {
     public static final String TAG = "ProductsFragment";
     private static final String KEY_GRID = "grid_mode";
+    private static final String KEY_SORT_ACTIVE = "sort_active";
+    private static final String KEY_SORT_ASC = "sort_asc";
 
     private ProductDbHelper dbHelper;
     private RecyclerView recyclerView;
@@ -41,11 +44,20 @@ public class ProductsFragment extends Fragment {
     private boolean suppressNextFullReload = false; // flaga pomijająca pełne odświeżenie po dodaniu
     private int totalCount = 0; // nowe liczniki
     private int expiringCount = 0;
+    private boolean priceSortActive = false; // czy aktywne sortowanie po cenie
+    private boolean priceSortAscending = true; // kierunek sortowania
+    private MaterialButton btnSortPrice; // przycisk sortowania
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_products, container, false);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // usunięto setHasOptionsMenu – sortowanie przeniesione do przycisku w layoucie
     }
 
     @Override
@@ -62,6 +74,8 @@ public class ProductsFragment extends Fragment {
 
         if (savedInstanceState != null) {
             isGrid = savedInstanceState.getBoolean(KEY_GRID, false);
+            priceSortActive = savedInstanceState.getBoolean(KEY_SORT_ACTIVE, false);
+            priceSortAscending = savedInstanceState.getBoolean(KEY_SORT_ASC, true);
         }
         applyLayoutManager();
         adapter = new ProductAdapter((FragmentActivity) requireActivity(), new java.util.ArrayList<>());
@@ -87,9 +101,33 @@ public class ProductsFragment extends Fragment {
                         isGrid = newGrid;
                         applyLayoutManager();
                         adapter.setGridMode(isGrid);
-                        requireActivity().invalidateOptionsMenu();
+                        // usunięto invalidateOptionsMenu
                     }
                 }
+            });
+        }
+        btnSortPrice = view.findViewById(R.id.btn_sort_price);
+        if (btnSortPrice != null) {
+            updateSortButtonUi();
+            btnSortPrice.setOnClickListener(v -> {
+                if (!priceSortActive) {
+                    priceSortActive = true; // pierwsze kliknięcie – aktywuj sortowanie rosnące
+                    priceSortAscending = true;
+                } else {
+                    priceSortAscending = !priceSortAscending; // kolejne kliknięcia zmieniają kierunek
+                }
+                if (adapter != null) adapter.sortByPrice(priceSortAscending);
+                updateSortButtonUi();
+            });
+            btnSortPrice.setOnLongClickListener(v -> {
+                // Dodatkowo: długie przytrzymanie wyłącza sortowanie (opcjonalne ułatwienie)
+                if (priceSortActive) {
+                    priceSortActive = false;
+                    priceSortAscending = true; // reset kierunku
+                    loadProducts(); // załaduj w oryginalnej kolejności (po ID DESC)
+                    updateSortButtonUi();
+                }
+                return true;
             });
         }
         loadProducts();
@@ -118,6 +156,8 @@ public class ProductsFragment extends Fragment {
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_GRID, isGrid);
+        outState.putBoolean(KEY_SORT_ACTIVE, priceSortActive);
+        outState.putBoolean(KEY_SORT_ASC, priceSortAscending);
     }
 
     private void openAddProduct() {
@@ -146,6 +186,9 @@ public class ProductsFragment extends Fragment {
             }
         }
         adapter.replaceData(products);
+        if (priceSortActive) {
+            adapter.sortByPrice(priceSortAscending);
+        }
         totalCount = products.size();
         expiringCount = newExpiring;
         updateCounters();
@@ -188,7 +231,14 @@ public class ProductsFragment extends Fragment {
         if (!isAdded()) return;
         Product p = dbHelper.getProductById(id);
         if (p == null || adapter == null) return;
-        adapter.addProductAtTop(p);
+        if (priceSortActive) {
+            // jeśli sortowanie aktywne – dodaj na koniec i przesortuj cały zbiór
+            adapter.addProductAtTop(p); // wstaw tymczasowo
+            adapter.sortByPrice(priceSortAscending); // uporządkuj ponownie
+        } else {
+            adapter.addProductAtTop(p);
+            animateFirstItem(); // animacja tylko przy braku sortowania (bo w sortowaniu mogłaby zmienić miejsce)
+        }
         totalCount += 1;
         if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
             try {
@@ -204,7 +254,9 @@ public class ProductsFragment extends Fragment {
         }
         updateCounters();
         suppressNextFullReload = true;
-        animateFirstItem(); // ręczna animacja
+        if (!priceSortActive) {
+            // animacja już wykonana jeśli brak sortowania
+        }
     }
 
     private void animateFirstItem() {
@@ -238,5 +290,21 @@ public class ProductsFragment extends Fragment {
         if (!isAdded()) return;
         tvTotal.setText(String.valueOf(totalCount));
         tvExpiring.setText(String.valueOf(expiringCount));
+    }
+
+    private void updateSortButtonUi() {
+        if (btnSortPrice == null) return;
+        if (!priceSortActive) {
+            btnSortPrice.setText("Cena");
+            btnSortPrice.setIcon(null); // brak ikony w stanie nieaktywnym
+        } else {
+            if (priceSortAscending) {
+                btnSortPrice.setText("Cena ↑");
+                btnSortPrice.setIcon(requireContext().getDrawable(android.R.drawable.arrow_up_float));
+            } else {
+                btnSortPrice.setText("Cena ↓");
+                btnSortPrice.setIcon(requireContext().getDrawable(android.R.drawable.arrow_down_float));
+            }
+        }
     }
 }
