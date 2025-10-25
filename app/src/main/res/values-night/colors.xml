@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Kolory bazowe -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Kolory tekstu w ciemnym trybie -->
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFBBBBBB</color>
+
+    <!-- Tła kart -->
+    <color name="card_background_ok">#FF2E2E2E</color>
+    <color name="card_background_danger">#FF402020</color>
+
+    <!-- Obramowania -->
+    <color name="card_border_danger">#FF4D5A</color>
+    <color name="card_border_warning">#FFC107</color>
+    <color name="card_border_success">#28A745</color>
+
+    <!-- Inne używane -->
+    <color name="teal_700">#018786</color>
+    <color name="solid_blue">#1E2F36</color>
+
+    <!-- Kolory inputów i podpowiedzi -->
+    <color name="input_background">#FF2E2E2E</color>
+    <color name="input_stroke">#FFBBBBBB</color>
+    <color name="text_hint">#80FFFFFF</color>
+
+    <!-- Kolory paska narzędzi -->
+    <color name="toolbar_title">#FF212121</color>
+</resources>

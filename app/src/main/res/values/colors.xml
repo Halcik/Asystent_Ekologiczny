@@ -2,4 +2,21 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Kolory tekstu (jasny tryb) -->
+    <color name="text_primary">#FF212121</color>
+    <color name="text_secondary">#FF666666</color>
+    <!-- Nowe kolory używane w bottom navigation i gradientach -->
+    <color name="teal_700">#018786</color>
+    <color name="card_border_danger">#dc3545</color>
+    <color name="card_background_danger">#D3FAB4B7</color>
+    <color name="card_background_ok">#D3F0F0F0</color>
+    <color name="card_border_warning">#ffc107</color>
+    <color name="card_border_success">#28a745</color>
+    <!-- Jednolity błękitny KOLOR TŁA -->
+    <color name="solid_blue">#DFF4FA</color>
+    <!-- Kolory dla pól formularza (jasny tryb) -->
+    <color name="input_background">#FFFFFFFF</color>
+    <color name="input_stroke">#FF000000</color>
+    <color name="text_hint">#99000000</color>
+    <color name="toolbar_title">#FFFFFFFF</color>
 </resources>

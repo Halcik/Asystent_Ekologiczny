@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Odstępy dla listy produktów tak, aby ostatnia karta nie była zasłonięta przez BottomNavigationView -->
+    <dimen name="content_bottom_padding">120dp</dimen>
+    <dimen name="scroll_bottom_margin">0dp</dimen>
+    <dimen name="list_end_spacer">72dp</dimen>
+    <dimen name="fab_margin_bottom">88dp</dimen>
+</resources>
+
