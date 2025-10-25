@@ -1,6 +1,8 @@
 package com.example.asystent_ekologiczny;
 
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -81,6 +83,19 @@ public class MainActivity extends AppCompatActivity {
                 showFragment(dest);
                 // Ustaw zaznaczenie na docelowym elemencie (mogło się zmienić wcześniej)
                 bottomNavigationView.setSelectedItemId(dest == 0 ? R.id.navigation_products : dest);
+            }
+        });
+        View rootView = findViewById(android.R.id.content);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            rootView.getWindowVisibleDisplayFrame(r);
+            int screenHeight = rootView.getRootView().getHeight();
+            int keypadHeight = screenHeight - r.bottom;
+
+            if (keypadHeight > screenHeight * 0.15) {
+                bottomNavigationView.setVisibility(View.GONE); // klawiatura otwarta
+            } else {
+                bottomNavigationView.setVisibility(View.VISIBLE); // klawiatura zamknięta
             }
         });
     }

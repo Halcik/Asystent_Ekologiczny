@@ -78,7 +78,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_expiration"
                 style="@style/AppTextInputEditText"
-                android:focusable="false"
+                android:focusable="true"
                 android:clickable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -146,7 +146,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_purchase"
                 style="@style/AppTextInputEditText"
-                android:focusable="false"
+                android:focusable="true"
                 android:clickable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
