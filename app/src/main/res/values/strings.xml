@@ -21,4 +21,20 @@
     <string name="not_available">–</string>
     <string name="details_not_found">Produkt nie znaleziony</string>
     <string name="category_icon_desc">Ikona kategorii</string>
+    <string name="settings_theme_title">Motyw aplikacji</string>
+    <string name="theme_system">Systemowy</string>
+    <string name="theme_light">Jasny</string>
+    <string name="theme_dark">Ciemny</string>
+    <string name="settings_theme_desc">Wybierz preferowany motyw jasny / ciemny lub podążaj za ustawieniem systemowym.</string>
+
+    <string-array name="theme_entries">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="theme_values">
+        <item>system</item>
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
 </resources>

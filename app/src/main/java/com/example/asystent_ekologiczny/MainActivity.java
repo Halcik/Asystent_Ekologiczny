@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SettingsFragment.applySavedTheme(this); // zastosuj zapisany motyw
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
@@ -110,13 +111,13 @@ public class MainActivity extends AppCompatActivity {
         if (settingsFragment != null) ft.hide(settingsFragment);
 
         if (itemId == R.id.navigation_deposit) {
-            ft.show(depositFragment);
+            if (depositFragment != null) ft.show(depositFragment);
         } else if (itemId == R.id.navigation_reports) {
-            ft.show(reportsFragment);
+            if (reportsFragment != null) ft.show(reportsFragment);
         } else if (itemId == R.id.navigation_settings) {
-            ft.show(settingsFragment);
+            if (settingsFragment != null) ft.show(settingsFragment);
         } else { // navigation_products
-            ft.show(productsFragment);
+            if (productsFragment != null) ft.show(productsFragment);
         }
         ft.commit();
         updateToolbarTitle(itemId);
