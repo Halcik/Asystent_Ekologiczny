@@ -26,6 +26,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Fragment formularza dodawania nowego produktu.
+ * Waliduje pola, zapisuje do bazy i zwraca wynik do ProductsFragment przez setFragmentResult.
+ */
 public class AddProductFragment extends Fragment {
     public static final String TAG = "AddProductFragment";
 
@@ -91,6 +95,7 @@ public class AddProductFragment extends Fragment {
         }
     }
 
+    /** Otwiera dialog wyboru daty i wpisuje wynik do wskazanego pola. */
     private void showDatePicker(TextInputEditText target) {
         Calendar cal = Calendar.getInstance();
         try {
@@ -110,6 +115,7 @@ public class AddProductFragment extends Fragment {
         dialog.show();
     }
 
+    /** Zbiera dane z pól, waliduje i zapisuje produkt. */
     private void saveProduct() {
         clearErrors();
         String name = text(etName);
@@ -165,6 +171,11 @@ public class AddProductFragment extends Fragment {
         }
     }
 
+    /** Czy wartość ma poprawny format daty yyyy-MM-dd. */
+    private boolean isValidDate(String value) {
+        try { dateFormat.parse(value); return true; } catch (ParseException e) { return false; }
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -182,10 +193,6 @@ public class AddProductFragment extends Fragment {
             adapter.sort(String::compareToIgnoreCase);
             adapter.notifyDataSetChanged();
         }
-    }
-
-    private boolean isValidDate(String value) {
-        try { dateFormat.parse(value); return true; } catch (ParseException e) { return false; }
     }
 
     private String text(TextInputEditText et) { return et.getText() == null ? "" : et.getText().toString().trim(); }

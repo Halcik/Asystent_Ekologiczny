@@ -30,6 +30,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Adapter RecyclerView prezentujący listę / siatkę produktów.
+ * Odpowiada za:
+ *  - dynamiczne kolory kart w zależności od terminu ważności,
+ *  - przełączanie listy/siatki (padding, layout manager w fragmencie),
+ *  - sortowanie po cenie (wywoływane z zewnątrz),
+ *  - tooltip z datą zakupu (long click),
+ *  - płynne animacje przy dodaniu.
+ */
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductVH> {
 
     private final List<Product> products;
@@ -165,12 +174,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         return products.get(position).getId();
     }
 
+    /** Odświeża cały zestaw danych (bez diff - dla prostoty). */
     public void replaceData(List<Product> newProducts) {
         products.clear();
         products.addAll(newProducts);
         notifyDataSetChanged(); // prosty refresh
     }
 
+    /** Ustawia tryb siatki (zmienia padding kart). */
     public void setGridMode(boolean grid) {
         if (this.gridMode != grid) {
             this.gridMode = grid;
@@ -178,6 +189,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         }
     }
 
+    /** Dodaje nowy produkt na górę listy jeśli nie istnieje (animacja wstawienia). */
     public void addProductAtTop(Product p) {
         if (p == null) return;
         for (Product existing : products) {
@@ -187,6 +199,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         notifyItemInserted(0);
     }
 
+    /** Sortuje według ceny w kierunku rosnącym / malejącym. */
     public void sortByPrice(boolean ascending) {
         java.util.Collections.sort(products, (a, b) -> {
             if (ascending) return Double.compare(a.getPrice(), b.getPrice());
@@ -211,6 +224,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         }
     }
 
+    /** Ikona kategorii na podstawie prostych dopasowań). */
     private int resolveCategoryIcon(String category) {
         if (category == null) return R.drawable.ic_category_other;
         String c = category.trim().toLowerCase(Locale.getDefault());

@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import android.text.TextWatcher;
 import android.text.Editable;
 
@@ -19,7 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.button.MaterialButton; // dodane
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -27,9 +26,17 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
+/**
+ * Fragment listy produktów.
+ * Funkcje:
+ *  - przełączanie układu lista/siatka
+ *  - sortowanie po cenie (przycisk w UI)
+ *  - wyszukiwarka nazw (animowane rozwijanie)
+ *  - zliczanie produktów oraz tych z krótkim terminem (<=3 dni)
+ *  - szybkie dodanie nowego produktu z animacją (wynik setFragmentResult)
+ */
 public class ProductsFragment extends Fragment {
     public static final String TAG = "ProductsFragment";
     private static final String KEY_GRID = "grid_mode";
@@ -220,6 +227,9 @@ public class ProductsFragment extends Fragment {
                 .commit();
     }
 
+    /**
+     * Wczytuje dane z DB, aktualizuje liczniki i stosuje filtr.
+     */
     private void loadProducts() {
         if (adapter == null) return;
         java.util.List<Product> products = dbHelper.getAllProducts();
@@ -245,6 +255,9 @@ public class ProductsFragment extends Fragment {
         applyFilterAndDisplay();
     }
 
+    /**
+     * Zastosowanie filtra nazwy + opcjonalne sortowanie.
+     */
     private void applyFilterAndDisplay() {
         if (adapter == null) return;
         String q = currentQuery.toLowerCase(java.util.Locale.getDefault());
@@ -297,7 +310,9 @@ public class ProductsFragment extends Fragment {
         recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(), recyclerView.getPaddingRight(), bottomExtraPaddingPx);
     }
 
-    // NOWA METODA: wstawia pojedynczy produkt z animacją
+    /**
+     * Wstawia nowy produkt (animacja jeśli brak filtra i sortowania).
+     */
     public void addNewProduct(long id) {
         if (!isAdded()) return;
         Product p = dbHelper.getProductById(id);
@@ -358,15 +373,21 @@ public class ProductsFragment extends Fragment {
     }
     private int dp(int d) { return (int)(getResources().getDisplayMetrics().density * d); }
 
+    /**
+     * Aktualizacja tekstowych liczników nagłówkowych.
+     */
     private void updateCounters() {
         if (!isAdded()) return;
         tvTotal.setText(String.valueOf(totalCount));
         tvExpiring.setText(String.valueOf(expiringCount));
     }
 
+    /**
+     * Aktualizacja ikon / stanu przycisku sortowania.
+     */
     private void updateSortButtonUi() {
         if (btnSortPrice == null) return;
-        btnSortPrice.setText("Cena"); // zawsze tylko słowo 'Cena'
+        btnSortPrice.setText("Cena");
         if (!priceSortActive) {
             btnSortPrice.setIcon(null);
         } else {

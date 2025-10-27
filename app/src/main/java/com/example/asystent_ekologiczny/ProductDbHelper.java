@@ -9,6 +9,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Pomocnik SQLite dla tabeli produktów.
+ * Przechowuje podstawowe informacje wpisywane w formularzu.
+ */
 public class ProductDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "products.db";
@@ -48,6 +52,7 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    /** Wstawia nowy produkt. Zwraca ID rekordu lub -1 przy błędzie. */
     public long insertProduct(Product p) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -61,6 +66,7 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         return db.insert(TABLE_PRODUCTS, null, cv);
     }
 
+    /** Zwraca listę wszystkich produktów (ostatnio dodane pierwsze). */
     public List<Product> getAllProducts() {
         List<Product> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
@@ -89,6 +95,7 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    /** Unikalne kategorie (do autocomplete). */
     public List<String> getDistinctCategories() {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
@@ -101,6 +108,7 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    /** Unikalne sklepy (do autocomplete). */
     public List<String> getDistinctStores() {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
@@ -113,6 +121,7 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    /** Pobiera produkt po ID lub null jeśli brak. */
     public Product getProductById(long id) {
         SQLiteDatabase db = getReadableDatabase();
         try (Cursor c = db.query(TABLE_PRODUCTS, null, COL_ID + "=?", new String[]{String.valueOf(id)}, null, null, null)) {

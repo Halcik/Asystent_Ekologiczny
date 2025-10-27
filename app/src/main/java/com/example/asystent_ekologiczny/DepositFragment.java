@@ -14,6 +14,10 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.card.MaterialCardView;
 
+/**
+ * Fragment prezentujący przykładowe pozycje systemu kaucyjnego (dane statyczne).
+ * Docelowo może być zastąpiony modułem obliczeń / listą edytowalną.
+ */
 public class DepositFragment extends Fragment {
 
     public static final String TAG = "DepositFragment";
@@ -35,6 +39,7 @@ public class DepositFragment extends Fragment {
         }
     }
 
+    /** Tworzy kartę z pozycją kaucji i dodaje do listy. */
     private void addDeposit(LinearLayout parent, String title, String subtitle, String value) {
         if (getContext() == null) return;
         MaterialCardView card = new MaterialCardView(requireContext());

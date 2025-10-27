@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Fragment listy produktów: statystyki, tryb widoku (lista/siatka), filtry i wyszukiwanie, lista + FAB dodawania -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -12,6 +13,7 @@
         android:background="@color/solid_blue"
         android:clipToPadding="false">
 
+        <!-- Nagłówek + opis -->
         <TextView
             android:id="@+id/products_title"
             android:layout_width="wrap_content"
@@ -27,6 +29,7 @@
             android:text="Śledź daty ważności i koszty, aby unikać marnowania żywności"
             android:textColor="@color/text_secondary" />
 
+        <!-- Liczba produktów i liczba tracących ważność (2 karty) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,6 +59,7 @@
                         android:textSize="22sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -86,6 +90,7 @@
                         android:textSize="22sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -95,7 +100,7 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- ZAMIANA: blok z przełącznikiem widoku (bez przycisku sortowania) -->
+        <!-- Przełącznik widoku listy / siatki -->
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/view_mode_toggle"
             android:layout_width="wrap_content"
@@ -127,7 +132,7 @@
                 app:iconSize="18dp" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
-        <!-- Pasek filtrów -->
+        <!-- Pasek filtrów i wyszukiwania -->
         <LinearLayout
             android:id="@+id/filters_bar"
             android:layout_width="match_parent"
@@ -158,13 +163,14 @@
                 app:iconGravity="textStart"
                 app:iconPadding="4dp" />
 
-            <!-- Elastyczna przestrzeń -->
+            <!-- Elastyczna przestrzeń odsuwająca część wyszukiwania w prawo -->
             <View
                 android:id="@+id/search_spacer"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
 
+            <!-- Ikona aktywująca pole wyszukiwania -->
             <ImageButton
                 android:id="@+id/btn_search_toggle"
                 android:layout_width="40dp"
@@ -175,6 +181,7 @@
                 android:tint="@color/text_secondary"
                 android:src="@drawable/ic_search_24" />
 
+            <!-- Kontener pola wyszukiwania (wysuwany) -->
             <LinearLayout
                 android:id="@+id/search_container"
                 android:layout_width="0dp"
@@ -222,7 +229,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Lista -->
+        <!-- Lista produktów -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/products_list"
             android:layout_width="match_parent"
@@ -234,7 +241,7 @@
 
     </LinearLayout>
 
-    <!-- FAB -->
+    <!-- Przycisk dodawania produktu -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add_product"
         android:layout_width="wrap_content"

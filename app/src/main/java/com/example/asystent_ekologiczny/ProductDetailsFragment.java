@@ -13,6 +13,10 @@ import androidx.fragment.app.Fragment;
 
 import java.text.DecimalFormat;
 
+/**
+ * Fragment wyświetlający szczegóły pojedynczego produktu (tylko do odczytu).
+ * Pobiera produkt na podstawie ID przekazanego w argumencie newInstance.
+ */
 public class ProductDetailsFragment extends Fragment {
     public static final String TAG = "ProductDetailsFragment";
     private static final String ARG_PRODUCT_ID = "product_id";
@@ -47,6 +51,7 @@ public class ProductDetailsFragment extends Fragment {
         bindProduct(view);
     }
 
+    /** Ładuje produkt z DB i przypisuje pola. Jeśli brak – zamyka fragment. */
     private void bindProduct(View root) {
         if (productId < 0) {
             Toast.makeText(requireContext(), R.string.details_not_found, Toast.LENGTH_SHORT).show();

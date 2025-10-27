@@ -5,5 +5,6 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
+    <!-- Publiczny motyw używany w manifestcie -->
     <style name="Theme.Asystent_Ekologiczny" parent="Base.Theme.Asystent_Ekologiczny" />
 </resources>

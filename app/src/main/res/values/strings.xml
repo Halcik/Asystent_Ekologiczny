@@ -1,6 +1,9 @@
 <resources>
+    <!-- Ogólne -->
     <string name="app_name">Asystent Ekologiczny</string>
     <string name="back">Wstecz</string>
+
+    <!-- Formularz dodawania / edycji produktu -->
     <string name="add_product_title">Dodaj produkt</string>
     <string name="hint_name">Nazwa produktu</string>
     <string name="hint_price">Cena (np. 4,50)</string>
@@ -10,6 +13,8 @@
     <string name="hint_store">Sklep</string>
     <string name="hint_purchase">Data zakupu (yyyy-MM-dd)</string>
     <string name="save">Zapisz</string>
+
+    <!-- Szczegóły produktu -->
     <string name="details_title">Szczegóły produktu</string>
     <string name="label_name">Nazwa</string>
     <string name="label_price">Cena</string>
@@ -21,12 +26,15 @@
     <string name="not_available">–</string>
     <string name="details_not_found">Produkt nie znaleziony</string>
     <string name="category_icon_desc">Ikona kategorii</string>
+
+    <!-- Ustawienia: motyw -->
     <string name="settings_theme_title">Motyw aplikacji</string>
     <string name="theme_system">Systemowy</string>
     <string name="theme_light">Jasny</string>
     <string name="theme_dark">Ciemny</string>
     <string name="settings_theme_desc">Wybierz preferowany motyw jasny / ciemny lub podążaj za ustawieniem systemowym.</string>
 
+    <!-- Tablice pomocnicze do ewentualnego użycia np. w Spinnerze (pozostawione dla przyszłej rozbudowy) -->
     <string-array name="theme_entries">
         <item>@string/theme_system</item>
         <item>@string/theme_light</item>

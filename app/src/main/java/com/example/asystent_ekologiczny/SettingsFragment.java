@@ -14,6 +14,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
+/**
+ * Fragment ustawień: pozwala użytkownikowi wybrać motyw (system/jasny/ciemny).
+ * Wybrany tryb zapisywany w SharedPreferences i stosowany globalnie przy starcie aplikacji.
+ */
 public class SettingsFragment extends Fragment {
 
     public static final String TAG = "SettingsFragment";
@@ -28,6 +32,7 @@ public class SettingsFragment extends Fragment {
         return v;
     }
 
+    /** Inicjalizuje RadioGroup motywu i reaguje na zmianę zaznaczenia. */
     private void setupThemeOptions(View root) {
         RadioGroup group = root.findViewById(R.id.radio_theme_group);
         if (group == null) return;

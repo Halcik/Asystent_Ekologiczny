@@ -13,6 +13,14 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+/**
+ * Główna aktywność hostująca cztery fragmenty dolnej nawigacji.
+ * Zarządza:
+ *  - inicjalizacją fragmentów i ich show/hide,
+ *  - przywracaniem zaznaczonej zakładki,
+ *  - ukrywaniem dolnej nawigacji gdy otwarta klawiatura,
+ *  - stosowaniem zapisanego motywu przed inflacją layoutu.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String KEY_SELECTED = "selected_item";
@@ -101,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** Pokazuje wybrany fragment (pozostałe ukrywa) i aktualizuje tytuł Toolbara. */
     private void showFragment(int itemId) {
         // Ukrywamy wszystko i pokazujemy właściwy fragment
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -123,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
         updateToolbarTitle(itemId);
     }
 
+    /** Aktualizuje tytuł paska aplikacji zależnie od wybranej sekcji. */
     private void updateToolbarTitle(int itemId) {
         if (getSupportActionBar() == null) return;
         if (itemId == R.id.navigation_deposit) {
@@ -144,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** Czy widoczny jest formularz dodawania lub szczegóły produktu (blokuje zmianę zakładki). */
     private boolean isAddProductVisible() { // rozszerzone: sprawdza również szczegóły produktu
         Fragment fAdd = getSupportFragmentManager().findFragmentByTag(AddProductFragment.TAG);
         if (fAdd != null && fAdd.isVisible()) return true;
