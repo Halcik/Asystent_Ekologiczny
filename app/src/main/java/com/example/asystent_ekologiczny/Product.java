@@ -21,8 +21,10 @@ public class Product {
     private final String store;
     /** Data zakupu w formacie yyyy-MM-dd. */
     private final String purchaseDate;
+    /** Czy produkt został zużyty (oznaczony przez użytkownika). */
+    private final boolean used;
 
-    public Product(long id, String name, double price, String expirationDate, String category, String description, String store, String purchaseDate) {
+    public Product(long id, String name, double price, String expirationDate, String category, String description, String store, String purchaseDate, boolean used) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -31,10 +33,15 @@ public class Product {
         this.description = description;
         this.store = store;
         this.purchaseDate = purchaseDate;
+        this.used = used;
     }
 
     public Product(String name, double price, String expirationDate, String category, String description, String store, String purchaseDate) {
-        this(-1, name, price, expirationDate, category, description, store, purchaseDate);
+        this(-1, name, price, expirationDate, category, description, store, purchaseDate, false);
+    }
+
+    public Product(String name, double price, String expirationDate, String category, String description, String store, String purchaseDate, boolean used) {
+        this(-1, name, price, expirationDate, category, description, store, purchaseDate, used);
     }
 
     public long getId() { return id; }
@@ -45,4 +52,5 @@ public class Product {
     public String getDescription() { return description; }
     public String getStore() { return store; }
     public String getPurchaseDate() { return purchaseDate; }
+    public boolean isUsed() { return used; }
 }

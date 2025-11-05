@@ -196,6 +196,19 @@ public class ProductsFragment extends Fragment {
                 addNewProduct(newId); // fade-in
             }
         });
+        // Listener na wynik edycji – pełne przeładowanie aby uwzględnić zmiany w sortowaniu/filtrze/licznikach
+        getParentFragmentManager().setFragmentResultListener("product_updated", getViewLifecycleOwner(), (key, bundle) -> {
+            long updatedId = bundle.getLong("updatedProductId", -1);
+            if (updatedId != -1) {
+                loadProducts();
+            }
+        });
+        getParentFragmentManager().setFragmentResultListener("product_deleted", getViewLifecycleOwner(), (key, bundle) -> {
+            long deletedId = bundle.getLong("deletedProductId", -1);
+            if (deletedId != -1) {
+                loadProducts();
+            }
+        });
     }
 
     @Override
@@ -238,6 +251,7 @@ public class ProductsFragment extends Fragment {
         int newExpiring = 0;
         Date today = stripTime(new Date());
         for (Product p : products) {
+            if (p.isUsed()) continue; // zużyte nie liczą się do wygasających
             if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
                 try {
                     Date exp = dateFormat.parse(p.getExpirationDate());
@@ -320,7 +334,7 @@ public class ProductsFragment extends Fragment {
         // Dodaj do pełnej listy źródłowej
         allProducts.add(0, p); // na początku listy źródłowej (bo domyślny porządek to ID DESC)
         totalCount += 1;
-        if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
+        if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty() && !p.isUsed()) {
             try {
                 Date exp = dateFormat.parse(p.getExpirationDate());
                 Date today = stripTime(new Date());
@@ -398,6 +412,7 @@ public class ProductsFragment extends Fragment {
 
     private void expandSearch(boolean animate) {
         if (searchContainer == null || btnSearchToggle == null) return;
+        if (searchContainer.getVisibility() == View.VISIBLE) return;
         if (searchContainer.getVisibility() == View.VISIBLE) return;
         searchContainer.setVisibility(View.VISIBLE);
         btnSearchToggle.setVisibility(View.GONE);

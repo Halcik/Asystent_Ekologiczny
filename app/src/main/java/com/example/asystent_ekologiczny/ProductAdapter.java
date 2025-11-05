@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable; // dodane
+import android.os.Bundle; // <-- brakujący import
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -68,6 +69,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         Context ctx = holder.itemView.getContext();
         Date today = stripTime(new Date());
 
+        // Bazowe kolory wg daty ważności
         int colorStroke = R.color.card_border_success;
         int colorCard = R.color.card_background_ok;
         if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) {
@@ -84,26 +86,50 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                 }
             } catch (ParseException ignored) {}
         }
+
+        // Jeśli zużyty – nadpisz kolory
+        if (p.isUsed()) {
+            colorCard = isDarkMode(ctx) ? R.color.card_used_background_dark : R.color.card_used_background;
+            colorStroke = isDarkMode(ctx) ? R.color.card_used_border_dark : R.color.card_used_border;
+        }
+
         holder.card.setStrokeWidth(dpToPx(ctx, 2));
         holder.card.setStrokeColor(ContextCompat.getColor(ctx, colorStroke));
         holder.card.setCardBackgroundColor(ContextCompat.getColor(ctx, colorCard));
-        // Mniejszy padding (kolejna redukcja): lista (12x8dp), siatka (8x6dp)
         int horizontal = gridMode ? 8 : 12; // dp
         int vertical = gridMode ? 6 : 8;    // dp
         holder.card.setContentPadding(dpToPx(ctx, horizontal), dpToPx(ctx, vertical), dpToPx(ctx, horizontal), dpToPx(ctx, vertical));
 
         holder.tvTitle.setText(p.getName());
         holder.tvTitle.setTypeface(Typeface.DEFAULT_BOLD);
-        // Ustawienie ikony kategorii
         holder.ivCategory.setImageResource(resolveCategoryIcon(p.getCategory()));
 
         String formattedPrice = priceFormat.format(p.getPrice()).replace('.', ',') + " zł";
         String subtitle = "Cena: " + formattedPrice;
         if (p.getExpirationDate() != null && !p.getExpirationDate().isEmpty()) subtitle += "  •  Ważność: " + p.getExpirationDate();
         holder.tvSubtitle.setText(subtitle);
-
         String extra = (p.getCategory() == null ? "" : p.getCategory()) + (p.getStore()==null?"" : ("  •  " + p.getStore()));
         holder.tvExtra.setText(extra.trim());
+
+        // Reset stylów tekstu do bazowych
+        holder.tvTitle.setAlpha(1f);
+        holder.tvSubtitle.setAlpha(1f);
+        holder.tvExtra.setAlpha(1f);
+        holder.ivCategory.setAlpha(1f);
+        if (p.isUsed()) {
+            int txt = isDarkMode(ctx) ? R.color.text_used_dark : R.color.text_used;
+            holder.tvTitle.setTextColor(ContextCompat.getColor(ctx, txt));
+            holder.tvSubtitle.setTextColor(ContextCompat.getColor(ctx, txt));
+            holder.tvExtra.setTextColor(ContextCompat.getColor(ctx, txt));
+            holder.tvTitle.setAlpha(0.85f);
+            holder.tvSubtitle.setAlpha(0.75f);
+            holder.tvExtra.setAlpha(0.75f);
+            holder.ivCategory.setAlpha(0.5f);
+        } else {
+            holder.tvTitle.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary));
+            holder.tvSubtitle.setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary));
+            holder.tvExtra.setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary));
+        }
 
         holder.card.setOnClickListener(v -> {
             ProductDetailsFragment fragment = ProductDetailsFragment.newInstance(p.getId());
@@ -120,6 +146,28 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             return true;
         });
+        if (holder.btnDelete != null) {
+            holder.btnDelete.setOnClickListener(v -> confirmDeleteItem(p, holder.getAdapterPosition()));
+        }
+        if (holder.cbUsed != null) {
+            holder.cbUsed.setOnCheckedChangeListener(null);
+            holder.cbUsed.setChecked(p.isUsed());
+            holder.cbUsed.setText(p.isUsed() ? R.string.label_used : R.string.label_active);
+            holder.cbUsed.setOnCheckedChangeListener((buttonView, checked) -> {
+                if (p.isUsed() != checked) {
+                    ProductDbHelper db = new ProductDbHelper(activity);
+                    db.setUsed(p.getId(), checked);
+                    db.close();
+                    products.set(position, new Product(p.getId(), p.getName(), p.getPrice(), p.getExpirationDate(), p.getCategory(), p.getDescription(), p.getStore(), p.getPurchaseDate(), checked));
+                    holder.cbUsed.setText(checked ? R.string.label_used : R.string.label_active);
+                    notifyItemChanged(position); // odśwież aby przeliczyć kolory
+                    // Powiadom fragment o zmianie (liczniki wygasających)
+                    Bundle b = new Bundle();
+                    b.putLong("updatedProductId", p.getId());
+                    activity.getSupportFragmentManager().setFragmentResult("product_updated", b);
+                }
+            });
+        }
     }
 
     private void showPurchaseTooltip(View anchorTitle, View cardView, String message) {
@@ -165,6 +213,33 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         anchorTitle.postDelayed(() -> { if (activeTooltip == pw) { pw.dismiss(); activeTooltip = null; } }, 2500);
     }
 
+    private void confirmDeleteItem(Product p, int adapterPos) {
+        if (p == null || adapterPos == RecyclerView.NO_POSITION) return;
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
+                .setTitle(R.string.delete_confirm_title)
+                .setMessage(R.string.delete_confirm_message)
+                .setPositiveButton(R.string.delete_yes, (d, which) -> performDeleteItem(p, adapterPos))
+                .setNegativeButton(R.string.delete_no, null)
+                .show();
+    }
+
+    private void performDeleteItem(Product p, int adapterPos) {
+        ProductDbHelper db = new ProductDbHelper(activity);
+        boolean ok = db.deleteProduct(p.getId());
+        db.close();
+        if (ok) {
+            products.remove(adapterPos);
+            notifyItemRemoved(adapterPos);
+            // Aktualizacja pozostałych indeksów (opcjonalnie notifyDataSetChanged jeśli duże zmiany)
+            Bundle b = new Bundle();
+            b.putLong("deletedProductId", p.getId());
+            activity.getSupportFragmentManager().setFragmentResult("product_deleted", b);
+            android.widget.Toast.makeText(activity, R.string.delete_success, android.widget.Toast.LENGTH_SHORT).show();
+        } else {
+            android.widget.Toast.makeText(activity, R.string.delete_failed, android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
     @Override
     public int getItemCount() { return products.size(); }
 
@@ -208,12 +283,19 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         notifyDataSetChanged();
     }
 
+    private boolean isDarkMode(Context ctx) {
+        int uiMode = ctx.getResources().getConfiguration().uiMode;
+        return (uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
     static class ProductVH extends RecyclerView.ViewHolder {
         final MaterialCardView card;
         final TextView tvTitle;
         final TextView tvSubtitle;
         final TextView tvExtra;
         final ImageView ivCategory; // nowa referencja
+        final ImageView btnDelete; // przycisk usuwania
+        final android.widget.CheckBox cbUsed; // checkbox zużycia
         ProductVH(@NonNull View itemView) {
             super(itemView);
             card = itemView.findViewById(R.id.card_product);
@@ -221,6 +303,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
             tvExtra = itemView.findViewById(R.id.tvExtra);
             ivCategory = itemView.findViewById(R.id.ivCategory);
+            btnDelete = itemView.findViewById(R.id.btn_delete_item);
+            cbUsed = itemView.findViewById(R.id.checkbox_used);
         }
     }
 

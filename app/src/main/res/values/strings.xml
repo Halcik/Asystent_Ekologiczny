@@ -5,6 +5,8 @@
 
     <!-- Formularz dodawania / edycji produktu -->
     <string name="add_product_title">Dodaj produkt</string>
+    <string name="edit_product_title">Edytuj produkt</string>
+    <string name="save_changes">Zapisz zmiany</string>
     <string name="hint_name">Nazwa produktu</string>
     <string name="hint_price">Cena (np. 4,50)</string>
     <string name="hint_expiration">Data ważności (yyyy-MM-dd)</string>
@@ -23,9 +25,12 @@
     <string name="label_description">Opis</string>
     <string name="label_store">Sklep</string>
     <string name="label_purchase">Data zakupu</string>
+    <string name="label_used">Zużyty</string>
+    <string name="label_active">Aktywny</string>
     <string name="not_available">–</string>
     <string name="details_not_found">Produkt nie znaleziony</string>
     <string name="category_icon_desc">Ikona kategorii</string>
+    <string name="price_format">%1$s zł</string>
 
     <!-- Ustawienia: motyw -->
     <string name="settings_theme_title">Motyw aplikacji</string>
@@ -45,4 +50,18 @@
         <item>light</item>
         <item>dark</item>
     </string-array>
+
+    <!-- Akcje i komunikaty -->
+    <string name="action_edit">Edytuj</string>
+    <string name="action_duplicate">Duplikuj</string>
+    <string name="action_delete">Usuń</string>
+    <string name="action_toggle_used">Przełącz zużycie</string>
+    <string name="duplicate_success">Utworzono kopię</string>
+    <string name="duplicate_failed">Błąd duplikacji</string>
+    <string name="delete_confirm_title">Usuń produkt</string>
+    <string name="delete_confirm_message">Czy na pewno chcesz usunąć ten produkt?</string>
+    <string name="delete_yes">Usuń</string>
+    <string name="delete_no">Anuluj</string>
+    <string name="delete_success">Usunięto</string>
+    <string name="delete_failed">Błąd usuwania</string>
 </resources>

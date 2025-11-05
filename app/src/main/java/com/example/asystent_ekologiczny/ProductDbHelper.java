@@ -16,7 +16,7 @@ import java.util.List;
 public class ProductDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "products.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2; // podniesiona wersja aby dodać kolumnę used
 
     public static final String TABLE_PRODUCTS = "products";
     public static final String COL_ID = "_id";
@@ -36,7 +36,8 @@ public class ProductDbHelper extends SQLiteOpenHelper {
             COL_CATEGORY + " TEXT, " +
             COL_DESCRIPTION + " TEXT, " +
             COL_STORE + " TEXT, " +
-            COL_PURCHASE_DATE + " TEXT" +
+            COL_PURCHASE_DATE + " TEXT, " +
+            "used INTEGER DEFAULT 0" +
             ")";
 
     public ProductDbHelper(Context context) { super(context, DB_NAME, null, DB_VERSION); }
@@ -48,8 +49,9 @@ public class ProductDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCTS);
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + TABLE_PRODUCTS + " ADD COLUMN used INTEGER DEFAULT 0");
+        }
     }
 
     /** Wstawia nowy produkt. Zwraca ID rekordu lub -1 przy błędzie. */
@@ -63,7 +65,25 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         cv.put(COL_DESCRIPTION, p.getDescription());
         cv.put(COL_STORE, p.getStore());
         cv.put(COL_PURCHASE_DATE, p.getPurchaseDate());
+        cv.put("used", p.isUsed() ? 1 : 0);
         return db.insert(TABLE_PRODUCTS, null, cv);
+    }
+
+    /** Aktualizuje istniejący produkt po jego ID. Zwraca true jeśli co najmniej 1 rekord został zmieniony. */
+    public boolean updateProduct(Product p) {
+        if (p.getId() < 0) return false; // brak poprawnego klucza
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_NAME, p.getName());
+        cv.put(COL_PRICE, p.getPrice());
+        cv.put(COL_EXPIRATION, p.getExpirationDate());
+        cv.put(COL_CATEGORY, p.getCategory());
+        cv.put(COL_DESCRIPTION, p.getDescription());
+        cv.put(COL_STORE, p.getStore());
+        cv.put(COL_PURCHASE_DATE, p.getPurchaseDate());
+        cv.put("used", p.isUsed() ? 1 : 0);
+        int rows = db.update(TABLE_PRODUCTS, cv, COL_ID + "=?", new String[]{String.valueOf(p.getId())});
+        return rows > 0;
     }
 
     /** Zwraca listę wszystkich produktów (ostatnio dodane pierwsze). */
@@ -79,7 +99,9 @@ public class ProductDbHelper extends SQLiteOpenHelper {
             int idxDesc = c.getColumnIndexOrThrow(COL_DESCRIPTION);
             int idxStore = c.getColumnIndexOrThrow(COL_STORE);
             int idxPurchase = c.getColumnIndexOrThrow(COL_PURCHASE_DATE);
+            int idxUsed = c.getColumnIndex("used");
             while (c.moveToNext()) {
+                boolean used = idxUsed >=0 && c.getInt(idxUsed) == 1;
                 list.add(new Product(
                         c.getLong(idxId),
                         c.getString(idxName),
@@ -88,7 +110,8 @@ public class ProductDbHelper extends SQLiteOpenHelper {
                         c.getString(idxCat),
                         c.getString(idxDesc),
                         c.getString(idxStore),
-                        c.getString(idxPurchase)
+                        c.getString(idxPurchase),
+                        used
                 ));
             }
         }
@@ -134,6 +157,8 @@ public class ProductDbHelper extends SQLiteOpenHelper {
                 int idxDesc = c.getColumnIndexOrThrow(COL_DESCRIPTION);
                 int idxStore = c.getColumnIndexOrThrow(COL_STORE);
                 int idxPurchase = c.getColumnIndexOrThrow(COL_PURCHASE_DATE);
+                int idxUsed = c.getColumnIndex("used");
+                boolean used = idxUsed >=0 && c.getInt(idxUsed) == 1;
                 return new Product(
                         c.getLong(idxId),
                         c.getString(idxName),
@@ -142,10 +167,41 @@ public class ProductDbHelper extends SQLiteOpenHelper {
                         c.getString(idxCat),
                         c.getString(idxDesc),
                         c.getString(idxStore),
-                        c.getString(idxPurchase)
+                        c.getString(idxPurchase),
+                        used
                 );
             }
         }
         return null;
+    }
+
+    public boolean deleteProduct(long id) {
+        if (id < 0) return false;
+        SQLiteDatabase db = getWritableDatabase();
+        int rows = db.delete(TABLE_PRODUCTS, COL_ID + "=?", new String[]{String.valueOf(id)});
+        return rows > 0;
+    }
+
+    public long duplicateProduct(long id) {
+        Product original = getProductById(id);
+        if (original == null) return -1;
+        Product copy = new Product(
+                original.getName(),
+                original.getPrice(),
+                original.getExpirationDate(),
+                original.getCategory(),
+                original.getDescription(),
+                original.getStore(),
+                original.getPurchaseDate()
+        ); // used domyślnie false
+        return insertProduct(copy);
+    }
+
+    public boolean setUsed(long id, boolean used) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("used", used ? 1 : 0);
+        int rows = db.update(TABLE_PRODUCTS, cv, COL_ID + "=?", new String[]{String.valueOf(id)});
+        return rows > 0;
     }
 }
