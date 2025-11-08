@@ -64,4 +64,36 @@
     <string name="delete_no">Anuluj</string>
     <string name="delete_success">Usunięto</string>
     <string name="delete_failed">Błąd usuwania</string>
+
+    <!-- Import/Eksport -->
+    <string name="export">Eksportuj</string>
+    <string name="import_products">Importuj</string>
+    <string name="export_choose_format_title">Eksportuj produkty</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_json">JSON</string>
+    <string name="export_success">Eksport zakończony</string>
+    <string name="export_failed">Błąd eksportu</string>
+    <string name="import_success">Zaimportowano %1$d produktów</string>
+    <string name="import_failed">Błąd importu</string>
+    <string name="import_invalid_format">Nieobsługiwany format pliku</string>
+    <string name="import_pick_title">Wybierz plik do importu</string>
+    <string name="export_saved_downloads">Plik zapisany w Pobrane</string>
+    <string name="export_saved_downloads_share">Zapisano w Pobrane i otworzono udostępnianie</string>
+    <string name="export_write_failed">Nie udało się zapisać do Pobrane</string>
+
+    <!-- Produkty -->
+    <string name="products_header_title">Produkty Domowe</string>
+    <string name="products_header_subtitle">Śledź daty ważności i koszty, aby unikać marnowania żywności</string>
+    <string name="label_products_count">Produktów</string>
+    <string name="label_expiring_count">Tracą ważność</string>
+    <string name="view_list">Lista</string>
+    <string name="view_grid">Siatka</string>
+    <string name="filters_label">Filtry:</string>
+    <string name="price_label">Cena</string>
+    <string name="search_content_desc">Szukaj</string>
+    <string name="search_icon_desc">Ikona wyszukiwania</string>
+    <string name="search_hint">Szukaj...</string>
+    <string name="search_clear_desc">Wyczyść i zamknij</string>
+    <string name="fab_add_desc">Dodaj produkt</string>
+    <string name="number_zero">0</string>
 </resources>
