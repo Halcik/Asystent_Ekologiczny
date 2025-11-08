@@ -96,4 +96,11 @@
     <string name="search_clear_desc">Wyczyść i zamknij</string>
     <string name="fab_add_desc">Dodaj produkt</string>
     <string name="number_zero">0</string>
+
+    <!-- Moduł kaucji: formularz i edycja -->
+    <string name="add_deposit_title">Dodaj opakowanie</string>
+    <string name="edit_deposit_title">Edytuj opakowanie</string>
+    <string name="hint_deposit_type">Typ opakowania (np. Butelka szklana 0,5L)</string>
+    <string name="hint_deposit_value">Wartość kaucji (zł)</string>
+    <string name="hint_deposit_barcode">Kod kreskowy (opcjonalnie)</string>
 </resources>
