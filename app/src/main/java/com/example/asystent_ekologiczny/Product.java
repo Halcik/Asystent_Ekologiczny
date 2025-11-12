@@ -1,16 +1,30 @@
 package com.example.asystent_ekologiczny;
 
+/**
+ * Model prostego produktu przechowywanego w lokalnej bazie SQLite.
+ * id == -1 oznacza jeszcze nie zapisany rekord.
+ */
 public class Product {
-    private long id;
-    private String name;
-    private double price;
-    private String expirationDate; // yyyy-MM-dd
-    private String category;
-    private String description;
-    private String store;
-    private String purchaseDate; // yyyy-MM-dd
+    /** Klucz główny (autoincrement w DB). */
+    private final long id;
+    /** Nazwa produktu. */
+    private final String name;
+    /** Cena w zł */
+    private final double price;
+    /** Data ważności . Format yyyy-MM-dd. */
+    private final String expirationDate;
+    /** Kategoria tekstowa (użytkownik wpisuje lub wybiera z listy). */
+    private final String category;
+    /** Opis produktu. */
+    private final String description;
+    /** Sklep (źródło zakupu). */
+    private final String store;
+    /** Data zakupu w formacie yyyy-MM-dd. */
+    private final String purchaseDate;
+    /** Czy produkt został zużyty (oznaczony przez użytkownika). */
+    private final boolean used;
 
-    public Product(long id, String name, double price, String expirationDate, String category, String description, String store, String purchaseDate) {
+    public Product(long id, String name, double price, String expirationDate, String category, String description, String store, String purchaseDate, boolean used) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -19,10 +33,15 @@ public class Product {
         this.description = description;
         this.store = store;
         this.purchaseDate = purchaseDate;
+        this.used = used;
     }
 
     public Product(String name, double price, String expirationDate, String category, String description, String store, String purchaseDate) {
-        this(-1, name, price, expirationDate, category, description, store, purchaseDate);
+        this(-1, name, price, expirationDate, category, description, store, purchaseDate, false);
+    }
+
+    public Product(String name, double price, String expirationDate, String category, String description, String store, String purchaseDate, boolean used) {
+        this(-1, name, price, expirationDate, category, description, store, purchaseDate, used);
     }
 
     public long getId() { return id; }
@@ -33,5 +52,5 @@ public class Product {
     public String getDescription() { return description; }
     public String getStore() { return store; }
     public String getPurchaseDate() { return purchaseDate; }
+    public boolean isUsed() { return used; }
 }
-

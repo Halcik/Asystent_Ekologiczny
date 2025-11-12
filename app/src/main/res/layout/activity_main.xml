@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Layout główny z jednolitym tłem -->
+<!-- Główny layout aplikacji: toolbar + kontener fragmentów + dolna nawigacja -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,6 +9,7 @@
     android:background="@color/solid_blue"
     tools:context=".MainActivity">
 
+    <!-- Pasek aplikacji (MaterialToolbar). Tytuł nadpisywany dynamicznie w MainActivity -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -19,6 +20,7 @@
         app:titleTextColor="@color/toolbar_title"
         app:titleMarginTop="25dp" />
 
+    <!-- Kontener na fragmenty (margines top = wysokość toolbara, bottom = miejsce dla BottomNavigation) -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
@@ -26,6 +28,7 @@
         android:layout_marginBottom="56dp"
         android:layout_marginTop="?attr/actionBarSize" />
 
+    <!-- Dolna nawigacja między głównymi sekcjami -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"

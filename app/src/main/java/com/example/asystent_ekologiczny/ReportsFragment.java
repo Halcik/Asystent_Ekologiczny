@@ -9,6 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+/**
+ * Placeholder fragmentu raportów. Docelowo: wykresy / statystyki.
+ */
 public class ReportsFragment extends Fragment {
 
     public static final String TAG = "ReportsFragment";
@@ -19,4 +22,3 @@ public class ReportsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_reports, container, false);
     }
 }
-
