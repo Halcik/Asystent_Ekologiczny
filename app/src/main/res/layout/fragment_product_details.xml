@@ -185,7 +185,7 @@
                     android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/action_edit"
-                    android:src="@drawable/ic_view_list"
+                    android:src="@drawable/ic_edit_icon"
                     app:tint="@color/text_primary" />
                 <TextView
                     android:layout_width="wrap_content"
@@ -208,7 +208,7 @@
                     android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/action_duplicate"
-                    android:src="@drawable/ic_view_grid"
+                    android:src="@drawable/ic_duplicate"
                     app:tint="@color/text_primary" />
                 <TextView
                     android:layout_width="wrap_content"
@@ -255,7 +255,7 @@
                     android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/action_delete"
-                    android:src="@drawable/ic_close_24"
+                    android:src="@drawable/ic_delete"
                     app:tint="@color/text_primary" />
                 <TextView
                     android:layout_width="wrap_content"
