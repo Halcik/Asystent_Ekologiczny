@@ -90,6 +90,7 @@
     <string name="view_grid">Siatka</string>
     <string name="filters_label">Filtry:</string>
     <string name="price_label">Cena</string>
+    <string name="status_label">Status</string>
     <string name="search_content_desc">Szukaj</string>
     <string name="search_icon_desc">Ikona wyszukiwania</string>
     <string name="search_hint">Szukaj...</string>

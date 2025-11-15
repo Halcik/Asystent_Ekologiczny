@@ -198,11 +198,25 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="0dp"
                 android:minHeight="32dp"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
                 android:text="@string/price_label"
+                android:textAllCaps="false"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_filter_status"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:minHeight="32dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="@string/status_label"
                 android:textAllCaps="false"
                 app:iconGravity="textStart"
                 app:iconPadding="4dp" />

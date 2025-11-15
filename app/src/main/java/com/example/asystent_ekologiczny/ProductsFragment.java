@@ -33,6 +33,7 @@ import java.util.Locale;
  * Funkcje:
  *  - przełączanie układu lista/siatka
  *  - sortowanie po cenie (przycisk w UI)
+ *  - filtrowanie po statusie (przycisk w UI)
  *  - wyszukiwarka nazw (animowane rozwijanie)
  *  - zliczanie produktów oraz tych z krótkim terminem (<=3 dni)
  *  - szybkie dodanie nowego produktu z animacją (wynik setFragmentResult)
@@ -59,6 +60,9 @@ public class ProductsFragment extends Fragment {
     private boolean priceSortActive = false; // czy aktywne sortowanie po cenie
     private boolean priceSortAscending = true; // kierunek sortowania
     private MaterialButton btnSortPrice; // przycisk sortowania
+    private boolean statusFilterActive = false; // czy aktywne filtrowanie po statusie
+    private boolean statusFilterActiveProducts = true; // czy pokazywać aktywne produkty
+    private MaterialButton btnFilterStatus; // przycisk filtrowania statusu
     private EditText searchInput;
     private String currentQuery = "";
     private java.util.List<Product> allProducts = new java.util.ArrayList<>();
@@ -144,6 +148,56 @@ public class ProductsFragment extends Fragment {
                 }
             });
         }
+        btnFilterStatus = view.findViewById(R.id.btn_filter_status);
+        if (btnFilterStatus != null) {
+            updateFilterButtonUi();
+            btnFilterStatus.setOnClickListener(v -> {
+                if (!statusFilterActive) {
+                    statusFilterActive = true; // pierwsze kliknięcie – aktywuj filtr
+                    statusFilterActiveProducts = true; // domyślnie pokazuj aktywne produkty
+                }
+                // Aktualizuj tekst przycisku
+                if (statusFilterActive) {
+                    statusFilterActiveProducts = !statusFilterActiveProducts; // przełącz co pokazywać
+                    String statusText = getString(R.string.status_label);
+                    btnFilterStatus.setText(statusText);
+                }
+                // Zastosuj filtr
+                if (adapter != null) {
+                    java.util.List<Product> filtered = new java.util.ArrayList<>();
+                    for (Product p : allProducts) {
+                        if (statusFilterActive) {
+                            if (statusFilterActiveProducts && !p.isUsed()) {
+                                filtered.add(p);
+                            } else if (!statusFilterActiveProducts && p.isUsed()) {
+                                filtered.add(p);
+                            }
+                        }
+                    }
+                    adapter.replaceData(filtered);
+                    updateFilterButtonUi();
+                    // Ponownie zastosuj sortowanie jeśli aktywne
+                    if (priceSortActive) {
+                        adapter.sortByPrice(priceSortAscending);
+                        updateFilterButtonUi();
+                    }
+                }
+            });
+            // tego nie ruszamy
+            btnFilterStatus.setOnLongClickListener(v -> {
+                // Dodatkowo: długie przytrzymanie wyłącza sortowanie (opcjonalne ułatwienie)
+                if (statusFilterActive) {
+                    statusFilterActive = false;
+                    statusFilterActiveProducts = true; // reset kierunku
+                    loadProducts(); // załaduj w oryginalnej kolejności (po ID DESC)
+                    updateFilterButtonUi();
+                }
+                return true;
+            });
+        }
+
+
+
         btnSortPrice = view.findViewById(R.id.btn_sort_price);
         if (btnSortPrice != null) {
             updateSortButtonUi();
@@ -429,6 +483,17 @@ public class ProductsFragment extends Fragment {
         } else {
             int iconRes = priceSortAscending ? R.drawable.ic_arrow_up_bold : R.drawable.ic_arrow_down_bold;
             btnSortPrice.setIcon(androidx.appcompat.content.res.AppCompatResources.getDrawable(requireContext(), iconRes));
+        }
+    }
+
+    private void updateFilterButtonUi() {
+        if (btnFilterStatus == null) return;
+        btnFilterStatus.setText(R.string.status_label);
+        if (!statusFilterActive) {
+            btnFilterStatus.setIcon(null);
+        } else {
+            int iconRes = statusFilterActiveProducts ? R.drawable.ic_used : R.drawable.ic_close_24;
+            btnFilterStatus.setIcon(androidx.appcompat.content.res.AppCompatResources.getDrawable(requireContext(), iconRes));
         }
     }
 

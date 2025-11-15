@@ -1,6 +1,7 @@
 package com.example.asystent_ekologiczny;
 
 import android.app.DatePickerDialog;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,6 +46,7 @@ public class AddProductFragment extends Fragment {
     private MaterialButton btnSave; // referencja do przycisku zapisu aby zmienić tekst
     private boolean editUsed = false; // zachowujemy flagę 'used' z edytowanego produktu
     private android.widget.CheckBox cbUsed; // checkbox zużycia
+    private MediaPlayer mediaPlayer;
 
     @Nullable
     @Override
@@ -55,6 +57,13 @@ public class AddProductFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Inicjalizacja MediaPlayera
+        mediaPlayer = MediaPlayer.create(requireContext(), R.raw.save);
+        mediaPlayer.setOnCompletionListener(player -> {
+            player.release();  // zwolnij po zakończeniu
+        });
+
         dateFormat.setLenient(false);
         // Inicjalizacja layoutów
         tilName = view.findViewById(R.id.til_name);
@@ -218,6 +227,9 @@ public class AddProductFragment extends Fragment {
                 if (ok) {
                     addIfNew(categoryAdapter, category);
                     addIfNew(storeAdapter, store);
+                    // dźwięk zapisu
+
+                    mediaPlayer.start();
                     Toast.makeText(requireContext(), "Zaktualizowano", Toast.LENGTH_SHORT).show();
                     Bundle result = new Bundle();
                     result.putLong("updatedProductId", editProductId);
@@ -233,6 +245,9 @@ public class AddProductFragment extends Fragment {
                 if (id > 0) {
                     addIfNew(categoryAdapter, category);
                     addIfNew(storeAdapter, store);
+                    // dźwięk zapisu
+                    mediaPlayer.start();
+
                     Toast.makeText(requireContext(), "Zapisano", Toast.LENGTH_SHORT).show();
                     Bundle result = new Bundle();
                     result.putLong("newProductId", id);
