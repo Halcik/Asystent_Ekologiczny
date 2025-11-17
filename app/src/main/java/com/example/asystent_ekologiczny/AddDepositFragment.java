@@ -30,14 +30,16 @@ import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.barcode.common.Barcode;
 
 import java.util.List;
+import android.widget.AutoCompleteTextView;
 
 /** Formularz dodawania / edycji opakowania kaucyjnego. */
 public class AddDepositFragment extends Fragment {
     public static final String TAG = "AddDepositFragment";
     private static final String ARG_EDIT_ID = "edit_deposit_id";
 
-    private TextInputLayout tilType, tilValue, tilBarcode;
-    private TextInputEditText etType, etValue, etBarcode;
+    private TextInputLayout tilCategory, tilName, tilValue, tilBarcode;
+    private AutoCompleteTextView actCategory; // lista kategorii
+    private TextInputEditText etName, etValue, etBarcode;
     private MaterialButton btnSave;
     private DepositDbHelper dbHelper;
     private long editId = -1;
@@ -70,10 +72,12 @@ public class AddDepositFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // Inicjalizacja widoków
-        tilType = view.findViewById(R.id.til_type);
+        tilCategory = view.findViewById(R.id.til_category);
+        tilName = view.findViewById(R.id.til_name);
         tilValue = view.findViewById(R.id.til_value);
         tilBarcode = view.findViewById(R.id.til_barcode);
-        etType = view.findViewById(R.id.et_type);
+        actCategory = view.findViewById(R.id.act_category);
+        etName = view.findViewById(R.id.et_name);
         etValue = view.findViewById(R.id.et_value);
         etBarcode = view.findViewById(R.id.et_barcode);
         btnSave = view.findViewById(R.id.btn_save);
@@ -114,6 +118,14 @@ public class AddDepositFragment extends Fragment {
 
         // Inicjalizacja skanera kodów
         initBarcodeScanner();
+        setupCategoryDropdown();
+    }
+
+    private void setupCategoryDropdown(){
+        String[] categories = getResources().getStringArray(R.array.deposit_categories);
+        android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, categories);
+        actCategory.setAdapter(adapter);
+        actCategory.setOnClickListener(v -> actCategory.showDropDown());
     }
 
     private void initBarcodeScanner() {
@@ -188,7 +200,8 @@ public class AddDepositFragment extends Fragment {
             Toast.makeText(requireContext(), "Nie znaleziono", Toast.LENGTH_SHORT).show();
             return;
         }
-        etType.setText(item.getType());
+        actCategory.setText(item.getCategory(), false);
+        etName.setText(item.getName());
         etValue.setText(String.valueOf(item.getValue()).replace('.', ','));
         etBarcode.setText(item.getBarcode());
         btnSave.setText(R.string.save_changes);
@@ -200,65 +213,46 @@ public class AddDepositFragment extends Fragment {
 
     private void saveDeposit() {
         clearErrors();
-        String type = text(etType);
+        String category = actCategory.getText()==null?"":actCategory.getText().toString().trim();
+        String name = text(etName);
         String valueStr = text(etValue);
         String barcode = text(etBarcode);
         boolean valid = true;
-
-        if (type.isEmpty()) {
-            tilType.setError("Wymagane");
-            valid = false;
-        }
-        if (valueStr.isEmpty()) {
-            tilValue.setError("Wymagane");
-            valid = false;
-        }
-
+        if (category.isEmpty()) { tilCategory.setError("Wymagane"); valid = false; }
+        if (name.isEmpty()) { tilName.setError("Wymagane"); valid = false; }
+        if (valueStr.isEmpty()) { tilValue.setError("Wymagane"); valid = false; }
         double value = 0;
         if (!valueStr.isEmpty()) {
             try {
                 value = Double.parseDouble(valueStr.replace(',', '.'));
-                if (value <= 0) {
-                    tilValue.setError(">0");
-                    valid = false;
-                }
-            } catch (NumberFormatException e) {
-                tilValue.setError("Liczba");
-                valid = false;
-            }
+                if (value <= 0) { tilValue.setError(">0"); valid = false; }
+            } catch (NumberFormatException e) { tilValue.setError("Liczba"); valid = false; }
         }
-
         if (!valid) return;
-
         if (editId > 0) {
-            DepositItem updated = new DepositItem(editId, type, value, barcode);
+            DepositItem updated = new DepositItem(editId, category, name, value, barcode);
             boolean ok = dbHelper.updateDeposit(updated);
             if (ok) {
                 Toast.makeText(requireContext(), "Zaktualizowano", Toast.LENGTH_SHORT).show();
-                Bundle b = new Bundle();
-                b.putLong("deposit_updated_id", editId);
+                Bundle b = new Bundle(); b.putLong("deposit_updated_id", editId);
                 requireActivity().getSupportFragmentManager().setFragmentResult("deposit_updated", b);
                 requireActivity().getSupportFragmentManager().popBackStack();
-            } else {
-                Toast.makeText(requireContext(), "Błąd", Toast.LENGTH_SHORT).show();
-            }
+            } else { Toast.makeText(requireContext(), "Błąd", Toast.LENGTH_SHORT).show(); }
         } else {
-            DepositItem item = new DepositItem(type, value, barcode);
+            DepositItem item = new DepositItem(category, name, value, barcode);
             long newId = dbHelper.insertDeposit(item);
             if (newId > 0) {
                 Toast.makeText(requireContext(), "Zapisano", Toast.LENGTH_SHORT).show();
-                Bundle b = new Bundle();
-                b.putLong("deposit_added_id", newId);
+                Bundle b = new Bundle(); b.putLong("deposit_added_id", newId);
                 requireActivity().getSupportFragmentManager().setFragmentResult("deposit_added", b);
                 requireActivity().getSupportFragmentManager().popBackStack();
-            } else {
-                Toast.makeText(requireContext(), "Błąd zapisu", Toast.LENGTH_SHORT).show();
-            }
+            } else { Toast.makeText(requireContext(), "Błąd zapisu", Toast.LENGTH_SHORT).show(); }
         }
     }
 
     private void clearErrors() {
-        tilType.setError(null);
+        tilCategory.setError(null);
+        tilName.setError(null);
         tilValue.setError(null);
         tilBarcode.setError(null);
     }

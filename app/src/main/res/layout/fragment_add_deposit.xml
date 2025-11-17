@@ -40,19 +40,40 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- Pole kategorii (lista) -->
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/til_type"
+            android:id="@+id/til_category"
             style="@style/AppTextInputBase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/hint_deposit_type">
+            android:hint="Kategoria">
+            <AutoCompleteTextView
+                android:id="@+id/act_category"
+                style="@style/AppTextInputEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:focusable="true"
+                android:clickable="true"
+                android:cursorVisible="false" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Pole nazwy opakowania -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_name"
+            style="@style/AppTextInputBase"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Nazwa opakowania">
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_type"
+                android:id="@+id/et_name"
                 style="@style/AppTextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Pole wartości kaucji -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_value"
             style="@style/AppTextInputBase"

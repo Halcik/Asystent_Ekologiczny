@@ -33,7 +33,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Typ"
+                android:text=""
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
@@ -53,7 +53,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="0.50 zł"
+            android:text=""
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 

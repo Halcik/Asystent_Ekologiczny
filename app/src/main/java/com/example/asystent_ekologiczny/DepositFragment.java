@@ -95,3 +95,5 @@ public class DepositFragment extends Fragment {
 
     @Override public void onDestroyView(){ super.onDestroyView(); if(dbHelper!=null){ dbHelper.close(); dbHelper=null; } }
 }
+
+

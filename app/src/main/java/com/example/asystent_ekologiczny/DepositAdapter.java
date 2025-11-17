@@ -59,8 +59,9 @@ public class DepositAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if(getItemViewType(position)==TYPE_FOOTER){ ((FooterVH)holder).bind(totalValue); return; }
         DepositItem item = data.get(position);
         ItemVH ih = (ItemVH)holder;
-        ih.title.setText(item.getType());
-        ih.subtitle.setText(String.format(Locale.getDefault(), "%.2f zł%s", item.getValue(), item.getBarcode()!=null && !item.getBarcode().isEmpty()? " • " + item.getBarcode():""));
+        ih.title.setText(item.getName());
+        String extraBarcode = item.getBarcode()!=null && !item.getBarcode().isEmpty()? " • " + item.getBarcode():"";
+        ih.subtitle.setText(String.format(Locale.getDefault(), "%s • %.2f zł%s", item.getCategory(), item.getValue(), extraBarcode));
         ih.itemView.setOnClickListener(v -> { if (listener!=null) listener.onItemClick(item); });
         ih.itemView.setOnLongClickListener(v -> { if (listener!=null) listener.onItemLongClick(item); return true; });
         ih.btnDelete.setOnClickListener(v -> { if(listener!=null) listener.onItemDelete(item); });
