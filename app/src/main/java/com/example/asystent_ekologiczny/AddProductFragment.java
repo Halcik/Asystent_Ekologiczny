@@ -12,6 +12,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
@@ -116,6 +119,22 @@ public class AddProductFragment extends Fragment {
                 enterEditMode(editProductId);
             }
         }
+
+        View rootScroll = view.findViewById(R.id.root_scroll);
+        if (rootScroll != null) {
+            // Zachowaj oryginalny padding aby nie kumulować przy każdym wywołaniu listenera
+            final int originalLeft = rootScroll.getPaddingLeft();
+            final int originalTop = rootScroll.getPaddingTop();
+            final int originalRight = rootScroll.getPaddingRight();
+            final int originalBottom = rootScroll.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(rootScroll, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                int bottomInset = Math.max(systemBars.bottom, ime.bottom); // gdy klawiatura wyżej niż system bars
+                v.setPadding(originalLeft, originalTop, originalRight, originalBottom + bottomInset);
+                return insets;
+            });
+        }
     }
 
     /** Ustawia fragment w tryb edycji – pobiera produkt i wypełnia pola. */
@@ -195,7 +214,7 @@ public class AddProductFragment extends Fragment {
 
         if (!exp.isEmpty() && !isValidDate(exp)) { tilExpiration.setError("Format yyyy-MM-dd"); valid = false; }
 
-        if (valid && isValidDate(exp)) {
+        if (isValidDate(exp)) {
             try {
                 Date pDate = dateFormat.parse(exp);
                 Date today = stripTime(new Date());
@@ -208,7 +227,7 @@ public class AddProductFragment extends Fragment {
 
         if (!purchase.isEmpty() && !isValidDate(purchase)) { tilPurchase.setError("Format yyyy-MM-dd"); valid = false; }
 
-        if (valid && isValidDate(purchase)) {
+        if (isValidDate(purchase)) {
             try {
                 Date pDate = dateFormat.parse(purchase);
                 Date today = stripTime(new Date());
