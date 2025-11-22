@@ -1,6 +1,7 @@
 package com.example.asystent_ekologiczny;
 
 import android.app.DatePickerDialog;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
@@ -26,8 +30,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Fragment formularza dodawania / edycji produktu.
+ * Tryb edycji jeśli zostanie przekazany argument ARG_EDIT_ID.
+ */
 public class AddProductFragment extends Fragment {
     public static final String TAG = "AddProductFragment";
+    private static final String ARG_EDIT_ID = "edit_product_id"; // klucz ID edytowanego produktu
 
     private TextInputLayout tilName, tilPrice, tilExpiration, tilCategory, tilDescription, tilStore, tilPurchase;
     private TextInputEditText etName, etPrice, etExpiration, etDescription, etPurchase;
@@ -36,6 +45,11 @@ public class AddProductFragment extends Fragment {
     private ArrayAdapter<String> storeAdapter;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
     private ProductDbHelper dbHelper; // dodane pole
+    private long editProductId = -1; // ID produktu w trybie edycji
+    private MaterialButton btnSave; // referencja do przycisku zapisu aby zmienić tekst
+    private boolean editUsed = false; // zachowujemy flagę 'used' z edytowanego produktu
+    private android.widget.CheckBox cbUsed; // checkbox zużycia
+    private MediaPlayer mediaPlayer;
 
     @Nullable
     @Override
@@ -46,6 +60,13 @@ public class AddProductFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Inicjalizacja MediaPlayera
+        mediaPlayer = MediaPlayer.create(requireContext(), R.raw.save);
+        mediaPlayer.setOnCompletionListener(player -> {
+            player.release();  // zwolnij po zakończeniu
+        });
+
         dateFormat.setLenient(false);
         // Inicjalizacja layoutów
         tilName = view.findViewById(R.id.til_name);
@@ -63,8 +84,9 @@ public class AddProductFragment extends Fragment {
         etDescription = view.findViewById(R.id.et_description);
         etStore = view.findViewById(R.id.et_store);
         etPurchase = view.findViewById(R.id.et_purchase);
+        cbUsed = null; // usunięty z layoutu
 
-        // Domyślna data zakupu = dziś
+        // Domyślna data zakupu = dziś (tylko w trybie dodawania)
         etPurchase.setText(dateFormat.format(new Date()));
 
         dbHelper = new ProductDbHelper(requireContext());
@@ -79,7 +101,7 @@ public class AddProductFragment extends Fragment {
         etExpiration.setOnClickListener(dateClick);
         etPurchase.setOnClickListener(dateClick);
 
-        MaterialButton btnSave = view.findViewById(R.id.btn_save);
+        btnSave = view.findViewById(R.id.btn_save);
         btnSave.setOnClickListener(v -> saveProduct());
 
         View backBtn = view.findViewById(R.id.btn_back);
@@ -89,8 +111,61 @@ public class AddProductFragment extends Fragment {
                 requireActivity().getSupportFragmentManager().popBackStack();
             });
         }
+
+        // Sprawdź czy mamy argument edycji
+        if (getArguments() != null) {
+            editProductId = getArguments().getLong(ARG_EDIT_ID, -1);
+            if (editProductId > 0) {
+                enterEditMode(editProductId);
+            }
+        }
+
+        View rootScroll = view.findViewById(R.id.root_scroll);
+        if (rootScroll != null) {
+            // Zachowaj oryginalny padding aby nie kumulować przy każdym wywołaniu listenera
+            final int originalLeft = rootScroll.getPaddingLeft();
+            final int originalTop = rootScroll.getPaddingTop();
+            final int originalRight = rootScroll.getPaddingRight();
+            final int originalBottom = rootScroll.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(rootScroll, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                int bottomInset = Math.max(systemBars.bottom, ime.bottom); // gdy klawiatura wyżej niż system bars
+                v.setPadding(originalLeft, originalTop, originalRight, originalBottom + bottomInset);
+                return insets;
+            });
+        }
     }
 
+    /** Ustawia fragment w tryb edycji – pobiera produkt i wypełnia pola. */
+    private void enterEditMode(long id) {
+        Product p = dbHelper.getProductById(id);
+        if (p == null) {
+            Toast.makeText(requireContext(), "Nie znaleziono produktu do edycji", Toast.LENGTH_SHORT).show();
+            return; // pozostaje tryb dodawania
+        }
+        editUsed = p.isUsed(); // zapamiętujemy wartość zużycia (formularz jej nie zmienia)
+        etName.setText(p.getName());
+        etPrice.setText(String.valueOf(p.getPrice()).replace('.', ','));
+        etExpiration.setText(p.getExpirationDate());
+        etCategory.setText(p.getCategory(), false);
+        etDescription.setText(p.getDescription());
+        etStore.setText(p.getStore(), false);
+        etPurchase.setText(p.getPurchaseDate());
+        if (cbUsed != null) cbUsed.setChecked(editUsed);
+        if (btnSave != null) {
+            btnSave.setText(editProductId > 0 ? R.string.save_changes : R.string.save);
+        }
+        // Tytuł zmieniamy jeśli istnieje
+        View title = getView() != null ? getView().findViewById(R.id.add_product_title) : null;
+        if (title instanceof com.google.android.material.textview.MaterialTextView) {
+            ((com.google.android.material.textview.MaterialTextView) title).setText(R.string.edit_product_title);
+        } else if (title instanceof android.widget.TextView) {
+            ((android.widget.TextView) title).setText(R.string.edit_product_title);
+        }
+    }
+
+    /** Otwiera dialog wyboru daty i wpisuje wynik do wskazanego pola. */
     private void showDatePicker(TextInputEditText target) {
         Calendar cal = Calendar.getInstance();
         try {
@@ -110,6 +185,7 @@ public class AddProductFragment extends Fragment {
         dialog.show();
     }
 
+    /** Zbiera dane z pól, waliduje i zapisuje nowy lub aktualizuje istniejący produkt. */
     private void saveProduct() {
         clearErrors();
         String name = text(etName);
@@ -125,7 +201,10 @@ public class AddProductFragment extends Fragment {
         if (priceStr.isEmpty()) { tilPrice.setError("Wymagane"); valid = false; }
         double price = 0;
         if (!priceStr.isEmpty()) {
-            try { price = Double.parseDouble(priceStr.replace(",",".")); }
+            try {
+                price = Double.parseDouble(priceStr.replace(",","."));
+                if (price <= 0) {tilPrice.setError("Cena musi być większa od 0"); valid = false;}
+            }
             catch (NumberFormatException e) { tilPrice.setError("Niepoprawna liczba"); valid = false; }
         }
         if (exp.isEmpty()) { tilExpiration.setError("Wymagane"); valid = false; }
@@ -134,9 +213,21 @@ public class AddProductFragment extends Fragment {
         if (purchase.isEmpty()) { tilPurchase.setError("Wymagane"); valid = false; }
 
         if (!exp.isEmpty() && !isValidDate(exp)) { tilExpiration.setError("Format yyyy-MM-dd"); valid = false; }
+
+        if (isValidDate(exp)) {
+            try {
+                Date pDate = dateFormat.parse(exp);
+                Date today = stripTime(new Date());
+                if (pDate != null && pDate.before(today)) {
+                    tilExpiration.setError("Nie może być w przeszłości");
+                    valid = false;
+                }
+            } catch (ParseException ignored) {}
+        }
+
         if (!purchase.isEmpty() && !isValidDate(purchase)) { tilPurchase.setError("Format yyyy-MM-dd"); valid = false; }
 
-        if (valid && isValidDate(purchase)) {
+        if (isValidDate(purchase)) {
             try {
                 Date pDate = dateFormat.parse(purchase);
                 Date today = stripTime(new Date());
@@ -148,21 +239,49 @@ public class AddProductFragment extends Fragment {
         }
 
         if (valid) {
-            Product p = new Product(name, price, exp, category, description, store, purchase);
-            long id = dbHelper.insertProduct(p);
-            if (id > 0) {
-                addIfNew(categoryAdapter, category);
-                addIfNew(storeAdapter, store);
-                Toast.makeText(requireContext(), "Zapisano", Toast.LENGTH_SHORT).show();
-                // Wysłanie wyniku do ProductsFragment (fade-in)
-                Bundle result = new Bundle();
-                result.putLong("newProductId", id);
-                requireActivity().getSupportFragmentManager().setFragmentResult("product_added", result);
-                requireActivity().getSupportFragmentManager().popBackStack();
+            if (editProductId > 0) {
+                // Tryb edycji
+                Product updated = new Product(editProductId, name, price, exp, category, description, store, purchase, editUsed);
+                boolean ok = dbHelper.updateProduct(updated);
+                if (ok) {
+                    addIfNew(categoryAdapter, category);
+                    addIfNew(storeAdapter, store);
+                    // dźwięk zapisu
+
+                    mediaPlayer.start();
+                    Toast.makeText(requireContext(), "Zaktualizowano", Toast.LENGTH_SHORT).show();
+                    Bundle result = new Bundle();
+                    result.putLong("updatedProductId", editProductId);
+                    requireActivity().getSupportFragmentManager().setFragmentResult("product_updated", result);
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                } else {
+                    Toast.makeText(requireContext(), "Błąd aktualizacji", Toast.LENGTH_SHORT).show();
+                }
             } else {
-                Toast.makeText(requireContext(), "Błąd zapisu", Toast.LENGTH_SHORT).show();
+                // Dodawanie
+                Product p = new Product(name, price, exp, category, description, store, purchase); // zawsze not used na starcie
+                long id = dbHelper.insertProduct(p);
+                if (id > 0) {
+                    addIfNew(categoryAdapter, category);
+                    addIfNew(storeAdapter, store);
+                    // dźwięk zapisu
+                    mediaPlayer.start();
+
+                    Toast.makeText(requireContext(), "Zapisano", Toast.LENGTH_SHORT).show();
+                    Bundle result = new Bundle();
+                    result.putLong("newProductId", id);
+                    requireActivity().getSupportFragmentManager().setFragmentResult("product_added", result);
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                } else {
+                    Toast.makeText(requireContext(), "Błąd zapisu", Toast.LENGTH_SHORT).show();
+                }
             }
         }
+    }
+
+    /** Czy wartość ma poprawny format daty yyyy-MM-dd. */
+    private boolean isValidDate(String value) {
+        try { dateFormat.parse(value); return true; } catch (ParseException e) { return false; }
     }
 
     @Override
@@ -182,10 +301,6 @@ public class AddProductFragment extends Fragment {
             adapter.sort(String::compareToIgnoreCase);
             adapter.notifyDataSetChanged();
         }
-    }
-
-    private boolean isValidDate(String value) {
-        try { dateFormat.parse(value); return true; } catch (ParseException e) { return false; }
     }
 
     private String text(TextInputEditText et) { return et.getText() == null ? "" : et.getText().toString().trim(); }
@@ -209,5 +324,14 @@ public class AddProductFragment extends Fragment {
         tilDescription.setError(null);
         tilStore.setError(null);
         tilPurchase.setError(null);
+    }
+
+    /** Fabryka tworząca fragment w trybie edycji istniejącego produktu. */
+    public static AddProductFragment newEditInstance(long productId) {
+        AddProductFragment f = new AddProductFragment();
+        Bundle b = new Bundle();
+        b.putLong(ARG_EDIT_ID, productId);
+        f.setArguments(b);
+        return f;
     }
 }
