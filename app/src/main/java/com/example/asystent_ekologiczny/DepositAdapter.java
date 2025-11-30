@@ -3,6 +3,7 @@ package com.example.asystent_ekologiczny;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,6 +21,7 @@ public class DepositAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         void onItemClick(DepositItem item);
         void onItemLongClick(DepositItem item);
         void onItemDelete(DepositItem item);
+        void onItemReturnedToggle(DepositItem item, boolean returned);
     }
     private final List<DepositItem> data = new ArrayList<>();
     private Listener listener;
@@ -65,22 +67,57 @@ public class DepositAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         ih.itemView.setOnClickListener(v -> { if (listener!=null) listener.onItemClick(item); });
         ih.itemView.setOnLongClickListener(v -> { if (listener!=null) listener.onItemLongClick(item); return true; });
         ih.btnDelete.setOnClickListener(v -> { if(listener!=null) listener.onItemDelete(item); });
+        // Checkbox zwrócenia
+        ih.cbReturned.setOnCheckedChangeListener(null);
+        ih.cbReturned.setChecked(item.isReturned());
+        ih.cbReturned.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (listener != null) listener.onItemReturnedToggle(item, isChecked);
+        });
+        // Stylizacja: wyszarzaj zwrócone (jak zużyte w produktach)
+        if (item.isReturned()) {
+            ih.itemView.setAlpha(0.6f);
+            ih.title.setTextColor(ih.itemView.getResources().getColor(R.color.text_secondary));
+            ih.subtitle.setTextColor(ih.itemView.getResources().getColor(R.color.text_secondary));
+        } else {
+            ih.itemView.setAlpha(1f);
+            ih.title.setTextColor(ih.itemView.getResources().getColor(R.color.text_primary));
+            ih.subtitle.setTextColor(ih.itemView.getResources().getColor(R.color.text_secondary));
+        }
+        // Ramka karty – zielona dla zwróconych lub standardowa dla aktywnych
+        if (ih.card != null) {
+            if (item.isReturned()) {
+                ih.card.setStrokeColor(ih.card.getResources().getColor(R.color.card_border_success));
+            } else {
+                ih.card.setStrokeColor(ih.card.getResources().getColor(R.color.card_border_success)); // zostaw ten sam lub ustaw inny dla aktywnych
+            }
+        }
     }
 
     @Override public int getItemCount() { return data.size() + 1; }
 
     static class ItemVH extends RecyclerView.ViewHolder {
-        TextView title; TextView subtitle; View btnDelete;
+        MaterialCardView card; TextView title; TextView subtitle; View btnDelete; CheckBox cbReturned;
         ItemVH(@NonNull View itemView) {
             super(itemView);
+            card = (MaterialCardView) itemView;
             title = itemView.findViewById(R.id.tv_deposit_title);
             subtitle = itemView.findViewById(R.id.tv_deposit_subtitle);
             btnDelete = itemView.findViewById(R.id.btn_deposit_delete);
+            cbReturned = itemView.findViewById(R.id.cb_returned);
         }
     }
     static class FooterVH extends RecyclerView.ViewHolder {
         private final TextView tv;
         FooterVH(@NonNull View itemView){ super(itemView); tv=(TextView)itemView; }
-        void bind(double sum){ tv.setText(String.format(Locale.getDefault(),"Łączna wartość kaucji: %.2f zł", sum)); }
+        void bind(double sum){ tv.setText(itemView.getResources().getString(R.string.deposit_footer_active_sum, sum)); }
+    }
+
+    /** Sortuje według kaucji w kierunku rosnącym / malejącym. */
+    public void sortByDeposit(boolean ascending) {
+        java.util.Collections.sort(data, (a, b) -> {
+            if (ascending) return Double.compare(a.getValue(), b.getValue());
+            return Double.compare(b.getValue(), a.getValue());
+        });
+        notifyDataSetChanged();
     }
 }

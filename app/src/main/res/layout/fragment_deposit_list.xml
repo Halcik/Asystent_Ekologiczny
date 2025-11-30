@@ -28,6 +28,109 @@
             android:text="Śledź wartość kaucji swoich opakowań"
             android:textColor="@color/text_secondary" />
 
+        <!-- Okienko podsumowania miesięcznego NAD filtrami, pełna szerokość (najbardziej kompaktowe) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/deposit_monthly_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="6dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:cardBackgroundColor="@color/card_background_ok"
+            app:contentPadding="10dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="44dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="6dp"
+                    android:contentDescription="@string/label_returned"
+                    android:src="@drawable/ic_used" />
+                <TextView
+                    android:id="@+id/deposit_monthly_summary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingTop="1dp"
+                    android:paddingBottom="1dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:text="Zwrócone w tym miesiącu: 0" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:id="@+id/filters_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/filters_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/filters_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sort_deposit"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:minHeight="32dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="@string/deposit_sort"
+                android:textAllCaps="false"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_filter_deposit_type"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:minHeight="32dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="@string/deposit_type"
+                android:textAllCaps="false"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_export_deposits"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:contentDescription="@string/export"
+                app:icon="@drawable/ic_export"
+                app:iconSize="24dp"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                android:text="" />
+
+        </LinearLayout>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/deposit_recycler"
             android:layout_width="match_parent"
@@ -35,7 +138,7 @@
             android:layout_marginTop="12dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="@dimen/scroll_bottom_margin" />
+            android:paddingBottom="@dimen/content_bottom_padding" />
 
         <TextView
             android:id="@+id/deposit_empty"

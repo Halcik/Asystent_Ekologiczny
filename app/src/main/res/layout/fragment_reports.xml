@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Ekran raportów: nagłówek i placeholder pod przyszłe statystyki / wykresy -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -12,9 +13,10 @@
 
         <!-- Nagłówek -->
         <TextView
+            android:id="@+id/reports_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Raporty Ekologiczne"
+            android:text="@string/reports_header"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
         <!-- Opis ekranu -->
@@ -22,19 +24,138 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Monitoruj swoje oszczędności i wpływ na środowisko" />
+            android:text="@string/reports_subtitle" />
 
-        <!-- Placeholder sekcji danych (do rozbudowy) -->
-        <LinearLayout
+        <!-- Ramka: Okres raportu -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_period"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="12dp">
-            <TextView
-                android:layout_width="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/card_background_ok"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="(Tutaj można dodać statystyki, wykresy itd.)" />
-        </LinearLayout>
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/reports_period_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_period_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="6dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+
+                    <Spinner
+                        android:id="@+id/spinner_year"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.6"
+                        android:spinnerMode="dropdown"
+                        android:prompt="@string/reports_hint_year" />
+
+                    <Spinner
+                        android:id="@+id/spinner_month"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.4"
+                        android:spinnerMode="dropdown"
+                        android:prompt="@string/reports_hint_month"
+                        android:textSize="16sp" />
+
+                    <Button
+                        android:id="@+id/btn_calculate_monthly_sum"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reports_calculate" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Sekcja: Miesięczna suma wydatków w ramce -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_monthly_sum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/monthly_sum_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_monthly_sum_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <!-- Wynik -->
+                <TextView
+                    android:id="@+id/tv_monthly_sum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/reports_monthly_sum_placeholder"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Ramka: Suma odzyskanej kaucji -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_deposit_sum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/deposit_sum_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_deposit_sum_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <!-- Wspólne pola wyboru roku i miesiąca wykorzystujemy te same nad ramką wydatków -->
+                <TextView
+                    android:id="@+id/tv_deposit_sum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/reports_deposit_sum_placeholder"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </ScrollView>

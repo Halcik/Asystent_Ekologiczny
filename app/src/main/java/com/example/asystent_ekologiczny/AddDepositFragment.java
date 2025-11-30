@@ -125,7 +125,17 @@ public class AddDepositFragment extends Fragment {
         String[] categories = getResources().getStringArray(R.array.deposit_categories);
         android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, categories);
         actCategory.setAdapter(adapter);
+        // Otwórz dropdown od razu po kliknięciu w pole
         actCategory.setOnClickListener(v -> actCategory.showDropDown());
+        // Otwórz dropdown, gdy pole dostaje fokus
+        actCategory.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) actCategory.showDropDown(); });
+        // Otwórz dropdown na dotknięcie (przed edycją), zwróć false, aby zachować standardowe zachowanie
+        actCategory.setOnTouchListener((v, event) -> { if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) { actCategory.showDropDown(); } return false; });
+        // Kliknięcie w cały kontener TextInputLayout też otwiera dropdown
+        if (tilCategory != null) {
+            tilCategory.setClickable(true);
+            tilCategory.setOnClickListener(v -> { actCategory.requestFocus(); actCategory.showDropDown(); });
+        }
     }
 
     private void initBarcodeScanner() {
@@ -230,7 +240,10 @@ public class AddDepositFragment extends Fragment {
         }
         if (!valid) return;
         if (editId > 0) {
-            DepositItem updated = new DepositItem(editId, category, name, value, barcode);
+            // Zachowaj obecny stan 'returned' przy aktualizacji
+            DepositItem existing = dbHelper.getDepositById(editId);
+            boolean returned = existing != null && existing.isReturned();
+            DepositItem updated = new DepositItem(editId, category, name, value, barcode, returned);
             boolean ok = dbHelper.updateDeposit(updated);
             if (ok) {
                 Toast.makeText(requireContext(), "Zaktualizowano", Toast.LENGTH_SHORT).show();
@@ -239,6 +252,7 @@ public class AddDepositFragment extends Fragment {
                 requireActivity().getSupportFragmentManager().popBackStack();
             } else { Toast.makeText(requireContext(), "Błąd", Toast.LENGTH_SHORT).show(); }
         } else {
+            // Nowe opakowanie nie jest zwrócone domyślnie
             DepositItem item = new DepositItem(category, name, value, barcode);
             long newId = dbHelper.insertDeposit(item);
             if (newId > 0) {

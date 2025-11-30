@@ -104,4 +104,50 @@
     <string name="hint_deposit_type">Typ opakowania (np. Butelka szklana 0,5L)</string>
     <string name="hint_deposit_value">Wartość kaucji (zł)</string>
     <string name="hint_deposit_barcode">Kod kreskowy (opcjonalnie)</string>
+
+
+    <!-- Moduł kaucji - ekran główny-->
+    <string name="deposit_sort">Kaucja</string>
+    <string name="deposit_type">Typ</string>
+
+    <!-- Moduł kaucji - element listy -->
+    <string name="label_returned">Zwrócone</string>
+    <string name="returned_desc">Oznacz opakowanie jako zwrócone</string>
+    <string name="deposit_footer_active_sum">Łączna wartość aktywnych kaucji: %1$.2f zł</string>
+
+    <!-- Raporty -->
+    <string name="reports_header">Raporty Ekologiczne</string>
+    <string name="reports_subtitle">Monitoruj swoje oszczędności i wpływ na środowisko</string>
+    <string name="reports_monthly_sum_title">Suma wydatków (miesięcznie)</string>
+    <string name="reports_hint_year">Rok (np. 2025)</string>
+    <string name="reports_hint_month">Miesiąc (1-12)</string>
+    <string name="reports_calculate">Oblicz</string>
+    <string name="reports_monthly_sum_placeholder">Suma: -</string>
+    <string name="reports_monthly_sum_result">Suma: %1$s</string>
+    <string name="reports_error_fill_inputs">Suma: brak danych (uzupełnij rok i miesiąc)</string>
+    <string name="reports_error_month_range">Suma: błąd (miesiąc 1-12)</string>
+    <string name="reports_error_number_format">Suma: błąd (nieprawidłowe liczby)</string>
+    <string name="reports_placeholder_stats">(Tutaj można dodać statystyki, wykresy itd.)</string>
+
+    <!-- Raporty: kaucja -->
+    <string name="reports_deposit_sum_title">Suma odzyskanej kaucji (miesięcznie)</string>
+    <string name="reports_deposit_sum_placeholder">Suma: -</string>
+    <string name="reports_deposit_sum_result">Suma: %1$s</string>
+    <string name="reports_period_title">Okres raportu</string>
+
+    <!-- Miesiące - pomocnicza tablica do wyboru miesiąca -->
+    <string-array name="months_names">
+        <item>Styczeń</item>
+        <item>Luty</item>
+        <item>Marzec</item>
+        <item>Kwiecień</item>
+        <item>Maj</item>
+        <item>Czerwiec</item>
+        <item>Lipiec</item>
+        <item>Sierpień</item>
+        <item>Wrzesień</item>
+        <item>Październik</item>
+        <item>Listopad</item>
+        <item>Grudzień</item>
+    </string-array>
 </resources>

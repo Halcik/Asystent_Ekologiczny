@@ -2,73 +2,44 @@ package com.example.asystent_ekologiczny;
 
 import android.view.View;
 
-import androidx.core.view.ViewCompat;
-import androidx.core.view.ViewPropertyAnimatorListener;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
- * FadeInItemAnimator – prosty animator do RecyclerView, który dodaje efekt płynnego
- * pojawiania się (fade-in) NOWO DODAWANYCH elementów listy.
- *
- * Użycie:
- *    recyclerView.setItemAnimator(new FadeInItemAnimator());
- *
- * Co animuje: TYLKO operacje dodania elementu (animateAdd). Pozostałe animacje
- * (usuwanie, zmiana, przenoszenie) pozostają takie jak w DefaultItemAnimator.
- *
- * Dlaczego własna klasa zamiast gotowych bibliotek: kod jest krótki, czytelny
- * i eliminuje nadmiarowe zależności. Łatwo można dopisać np. skalowanie czy
- * przesunięcie.
+ * Slide-in z dołu dla dodawanych elementów RecyclerView (bez fade-in).
  */
 public class FadeInItemAnimator extends DefaultItemAnimator {
 
-    /**
-     * Konstruktor – ustawiamy czas trwania animacji dodawania.
-     * Możesz zmienić wartość (ms) dopasowując prędkość pojawiania.
-     */
-    public FadeInItemAnimator() {
-        setAddDuration(200); // czas animacji dodania w milisekundach
-    }
+    public FadeInItemAnimator() { setAddDuration(220); }
 
-    /**
-     * animateAdd – wywoływane, gdy RecyclerView dodaje nowy ViewHolder.
-     * Kroki:
-     *  1. Ustawiamy alpha = 0 (start – element niewidoczny).
-     *  2. Zgłaszamy rozpoczęcie animacji do systemu (dispatchAddStarting).
-     *  3. Animujemy przejście alpha -> 1.
-     *  4. Na końcu zgłaszamy zakończenie animacji (dispatchAddFinished).
-     */
     @Override
     public boolean animateAdd(final RecyclerView.ViewHolder holder) {
-        holder.itemView.setAlpha(0f); // startowa przezroczystość
-        dispatchAddStarting(holder); // powiadomienie RecyclerView o starcie animacji dodania
+        final View item = holder.itemView;
+        // Startowe przesunięcie w dół
+        float dy = item.getResources().getDisplayMetrics().density * 24f;
+        item.setTranslationY(dy);
+        dispatchAddStarting(holder);
 
-        ViewCompat.animate(holder.itemView)
-                .alpha(1f) // docelowa pełna widoczność
+        item.animate()
+                .translationY(0f)
                 .setDuration(getAddDuration())
-                .setListener(new ViewPropertyAnimatorListener() {
-                    @Override public void onAnimationStart(View view) { /* brak dodatkowych działań */ }
-                    @Override public void onAnimationEnd(View view) {
-                        view.setAlpha(1f); // upewniamy się, że końcowa alpha = 1
-                        dispatchAddFinished(holder); // informujemy, że animacja się zakończyła
+                .setListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override public void onAnimationEnd(@NonNull android.animation.Animator animation) {
+                        item.setTranslationY(0f);
+                        dispatchAddFinished(holder);
                     }
-                    @Override public void onAnimationCancel(View view) {
-                        // Jeśli animacja zostanie przerwana – przywracamy pełną widoczność.
-                        view.setAlpha(1f);
+                    @Override public void onAnimationCancel(@NonNull android.animation.Animator animation) {
+                        item.setTranslationY(0f);
                     }
-                }).start();
-        return true; // informujemy, że obsłużyliśmy animację sami
+                });
+        return true;
     }
 
-    /**
-     * endAnimation – gdy system chce natychmiast zakończyć animację
-     * (np. szybka zmiana danych), anulujemy bieżącą i przywracamy właściwy stan.
-     */
     @Override
     public void endAnimation(RecyclerView.ViewHolder item) {
-        item.itemView.animate().cancel(); // zatrzymanie ewentualnej animacji
-        item.itemView.setAlpha(1f);       // przywrócenie pełnej widoczności
-        super.endAnimation(item);         // reszta logiki bazowej klasy
+        item.itemView.animate().cancel();
+        item.itemView.setTranslationY(0f);
+        super.endAnimation(item);
     }
 }

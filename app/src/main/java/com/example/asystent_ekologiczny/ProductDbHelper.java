@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Pomocnik SQLite dla tabeli produktów.
@@ -203,5 +204,43 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         cv.put("used", used ? 1 : 0);
         int rows = db.update(TABLE_PRODUCTS, cv, COL_ID + "=?", new String[]{String.valueOf(id)});
         return rows > 0;
+    }
+
+    /**
+     * Zwraca sumę wydatków (sumę cen) dla podanego roku i miesiąca.
+     * Miesiąc: 1-12 (styczeń=1). Zwraca 0.0 jeśli brak danych.
+     */
+    public double getMonthlySum(int year, int month) {
+        SQLiteDatabase db = getReadableDatabase();
+        String ym = String.format(Locale.ROOT, "%04d-%02d", year, month);
+        double sum = 0.0;
+        // Używamy strftime('%Y-%m', purchase_date) do porównania miesiąca; purchase_date jest TEXT 'yyyy-MM-dd'
+        String sql = "SELECT SUM(" + COL_PRICE + ") FROM " + TABLE_PRODUCTS + " WHERE strftime('%Y-%m', " + COL_PURCHASE_DATE + ") = ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{ym})) {
+            if (c.moveToFirst()) {
+                if (!c.isNull(0)) {
+                    sum = c.getDouble(0);
+                }
+            }
+        }
+        return sum;
+    }
+
+    /**
+     * Zwraca listę par (rok-miesiąc -> suma) dla wszystkich danych.
+     * Przydatne do wykresów/raportów miesięcznych.
+     */
+    public List<String> getMonthlySumsRaw() {
+        List<String> result = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT strftime('%Y-%m', " + COL_PURCHASE_DATE + ") AS ym, SUM(" + COL_PRICE + ") AS total FROM " + TABLE_PRODUCTS + " WHERE " + COL_PURCHASE_DATE + " IS NOT NULL AND " + COL_PURCHASE_DATE + " != '' GROUP BY ym ORDER BY ym DESC";
+        try (Cursor c = db.rawQuery(sql, null)) {
+            while (c.moveToNext()) {
+                String ym = c.getString(0);
+                double total = c.isNull(1) ? 0.0 : c.getDouble(1);
+                result.add(ym + ":" + total);
+            }
+        }
+        return result;
     }
 }
