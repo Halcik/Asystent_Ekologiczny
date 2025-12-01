@@ -36,6 +36,7 @@ public class DepositFragment extends Fragment {
 
     private MaterialButton btnExportDeposits;
     private TextView tvMonthlySummary;
+    private MaterialButton btnShowReturnPointsMap; // nowy przycisk mapy punktów zwrotu
 
     @Nullable
     @Override
@@ -120,6 +121,15 @@ public class DepositFragment extends Fragment {
 
         tvMonthlySummary = view.findViewById(R.id.deposit_monthly_summary);
         updateMonthlySummary();
+
+        btnShowReturnPointsMap = view.findViewById(R.id.btn_show_return_points_map);
+        if (btnShowReturnPointsMap != null) {
+            btnShowReturnPointsMap.setOnClickListener(v -> {
+                // Wyświetl dialog z placeholderem mapy
+                ReturnPointsMapDialogFragment dialog = new ReturnPointsMapDialogFragment();
+                dialog.show(getParentFragmentManager(), ReturnPointsMapDialogFragment.TAG);
+            });
+        }
     }
 
 
@@ -455,7 +465,7 @@ public class DepositFragment extends Fragment {
         int month01 = cal.get(java.util.Calendar.MONTH) + 1;
         int count = dbHelper.countReturnedInMonth(year, month01);
         if (tvMonthlySummary != null) {
-            tvMonthlySummary.setText("Zwrócone w tym miesiącu: " + count);
+            tvMonthlySummary.setText(getString(R.string.deposit_monthly_summary_format, count));
         }
     }
 }

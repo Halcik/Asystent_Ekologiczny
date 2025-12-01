@@ -1,6 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 }
+
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        load(file.inputStream())
+    }
+}
+
+val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY") ?: ""
+
 
 android {
     namespace = "com.example.asystent_ekologiczny"
@@ -12,6 +24,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        resValue("string", "google_maps_key", mapsApiKey)
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -54,4 +67,7 @@ dependencies {
 
     // ViewModel i LiveData
     implementation("androidx.lifecycle:lifecycle-livedata:2.9.4")
+
+    // Google Play Services Maps
+    implementation(libs.play.services.maps)
 }

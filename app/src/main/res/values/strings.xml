@@ -150,4 +150,12 @@
         <item>Listopad</item>
         <item>Grudzień</item>
     </string-array>
+
+    <!-- Moduł kaucji - mapa punktów zwrotu -->
+    <string name="deposit_map_button">Mapa punktów zwrotu</string>
+    <string name="deposit_map_dialog_title">Punkty zwrotu – mapa</string>
+    <string name="deposit_map_placeholder">Tu pojawi się mapa punktów zwrotu</string>
+
+    <!-- Podsumowanie miesięczne kaucji -->
+    <string name="deposit_monthly_summary_format">Zwrócone w tym miesiącu: %1$d</string>
 </resources>

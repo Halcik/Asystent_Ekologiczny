@@ -86,7 +86,6 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="0dp"
                 android:minHeight="32dp"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
@@ -100,7 +99,6 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="0dp"
                 android:minHeight="32dp"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
@@ -108,6 +106,22 @@
                 android:textAllCaps="false"
                 app:iconGravity="textStart"
                 app:iconPadding="4dp" />
+
+            <!-- Ikonowy przycisk mapy -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_show_return_points_map"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:contentDescription="@string/deposit_map_button"
+                app:icon="@drawable/ic_map_24"
+                app:iconSize="24dp"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                android:text="" />
 
             <Space
                 android:layout_width="0dp"
