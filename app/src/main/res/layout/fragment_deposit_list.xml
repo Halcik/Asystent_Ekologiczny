@@ -117,7 +117,7 @@
                 android:minWidth="0dp"
                 android:minHeight="0dp"
                 android:contentDescription="@string/deposit_map_button"
-                app:icon="@drawable/ic_map_24"
+                app:icon="@android:drawable/ic_dialog_map"
                 app:iconSize="24dp"
                 app:iconPadding="0dp"
                 app:iconGravity="textStart"
