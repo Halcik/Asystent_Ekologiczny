@@ -181,4 +181,9 @@
 
     <!-- Podsumowanie miesięczne kaucji -->
     <string name="deposit_monthly_summary_format">Zwrócone w tym miesiącu: %1$d</string>
+
+    <!-- Raporty: wydatki według kategorii -->
+    <string name="reports_category_sum_title">Raport wydatków według kategorii</string>
+    <string name="reports_category_sum_placeholder">Brak danych o kategoriach.</string>
+    <string name="reports_category_sum_item">%1$s: %2$s</string>
 </resources>

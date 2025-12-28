@@ -30,6 +30,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 /**
@@ -42,6 +43,7 @@ public class ReportsFragment extends Fragment {
     private ProductDbHelper dbHelper;
     private DepositDbHelper depositDbHelper;
     private BarChart barChart;
+    private TextView categorySumsTv;
 
     private String formatPln(double value) {
         // Użyj lokalnych separatorów, ale poprzedź wartość "PLN " ze zwykłą spacją
@@ -63,6 +65,7 @@ public class ReportsFragment extends Fragment {
         TextView resultTv = root.findViewById(R.id.tv_monthly_sum);
         TextView depositResultTv = root.findViewById(R.id.tv_deposit_sum);
         barChart = root.findViewById(R.id.bar_chart_expenses_vs_deposits);
+        categorySumsTv = root.findViewById(R.id.tv_category_sums);
 
         // Konfiguracja spinnera miesięcy
         ArrayAdapter<CharSequence> monthsAdapter = ArrayAdapter.createFromResource(requireContext(), R.array.months_names, android.R.layout.simple_spinner_item);
@@ -93,7 +96,10 @@ public class ReportsFragment extends Fragment {
         setupBarChart();
         updateBarChartForYear(currentYear);
 
-        // Zmiana roku -> odśwież wykres
+        // Raport wydatków według kategorii dla bieżącego okresu
+        updateCategoryReport(currentYear, currentMonth);
+
+        // Zmiana roku -> odśwież wykres (raport kategorii zostaje powiązany z przyciskiem Oblicz)
         yearSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
@@ -119,6 +125,9 @@ public class ReportsFragment extends Fragment {
                 double depSum = depositDbHelper.sumReturnedValueInMonth(year, month);
                 resultTv.setText(getString(R.string.reports_monthly_sum_result, formatPln(sum)));
                 depositResultTv.setText(getString(R.string.reports_deposit_sum_result, formatPln(depSum)));
+
+                // Odśwież raport kategorii dla wybranego okresu
+                updateCategoryReport(year, month);
             } catch (Exception ex) {
                 resultTv.setText(getString(R.string.reports_error_number_format));
                 depositResultTv.setText(getString(R.string.reports_error_number_format));
@@ -126,6 +135,32 @@ public class ReportsFragment extends Fragment {
         });
 
         return root;
+    }
+
+    private void updateCategoryReport(int year, int month) {
+        if (dbHelper == null || categorySumsTv == null) return;
+
+        Map<String, Double> categorySums = dbHelper.getCategorySumsForMonth(year, month);
+        if (categorySums.isEmpty()) {
+            categorySumsTv.setText(getString(R.string.reports_category_sum_placeholder));
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Double> entry : categorySums.entrySet()) {
+            String line = getString(
+                    R.string.reports_category_sum_item,
+                    entry.getKey(),
+                    formatPln(entry.getValue())
+            );
+            sb.append("• ")
+              .append(line)
+              .append("\n");
+        }
+        if (sb.length() > 0) {
+            sb.setLength(sb.length() - 1);
+        }
+        categorySumsTv.setText(sb.toString());
     }
 
     private void setupBarChart() {
@@ -154,12 +189,9 @@ public class ReportsFragment extends Fragment {
         int nightModeFlags = requireContext().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
 
-        int textColor;
-        if (isDarkMode) {
-            textColor = ContextCompat.getColor(requireContext(), android.R.color.white);
-        } else {
-            textColor = ContextCompat.getColor(requireContext(), android.R.color.black);
-        }
+        int textColor = isDarkMode
+                ? ContextCompat.getColor(requireContext(), android.R.color.white)
+                : ContextCompat.getColor(requireContext(), android.R.color.black);
 
         // Legenda
         Legend legend = barChart.getLegend();

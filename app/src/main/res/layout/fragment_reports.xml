@@ -159,6 +159,41 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Sekcja: Raport wydatków według kategorii -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_categories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/category_report_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_category_sum_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_category_sums"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_category_sum_placeholder"
+                    android:paddingTop="4dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Sekcja: Wykres słupkowy wydatków vs odzyskane kaucje -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_report_bar_chart"

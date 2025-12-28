@@ -7,7 +7,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 /**
@@ -239,6 +241,54 @@ public class ProductDbHelper extends SQLiteOpenHelper {
                 String ym = c.getString(0);
                 double total = c.isNull(1) ? 0.0 : c.getDouble(1);
                 result.add(ym + ":" + total);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Zwraca mapę: kategoria -> suma wydatków (price) dla wszystkich produktów w tej kategorii.
+     * Kategorie puste / null są pomijane.
+     */
+    public Map<String, Double> getCategorySums() {
+        Map<String, Double> result = new HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT " + COL_CATEGORY + ", SUM(" + COL_PRICE + ") AS total " +
+                "FROM " + TABLE_PRODUCTS + " " +
+                "WHERE " + COL_CATEGORY + " IS NOT NULL AND " + COL_CATEGORY + " != '' " +
+                "GROUP BY " + COL_CATEGORY + " " +
+                "ORDER BY total DESC";
+        try (Cursor c = db.rawQuery(sql, null)) {
+            while (c.moveToNext()) {
+                String cat = c.getString(0);
+                double total = c.isNull(1) ? 0.0 : c.getDouble(1);
+                result.put(cat, total);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Zwraca mapę: kategoria -> suma wydatków dla podanego roku i miesiąca.
+     * Miesiąc: 1-12 (styczeń=1). Kategorie puste / null są pomijane.
+     */
+    public Map<String, Double> getCategorySumsForMonth(int year, int month) {
+        Map<String, Double> result = new HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+
+        String ym = String.format(Locale.ROOT, "%04d-%02d", year, month);
+        String sql = "SELECT " + COL_CATEGORY + ", SUM(" + COL_PRICE + ") AS total " +
+                "FROM " + TABLE_PRODUCTS + " " +
+                "WHERE " + COL_CATEGORY + " IS NOT NULL AND " + COL_CATEGORY + " != '' " +
+                "AND strftime('%Y-%m', " + COL_PURCHASE_DATE + ") = ? " +
+                "GROUP BY " + COL_CATEGORY + " " +
+                "ORDER BY total DESC";
+
+        try (Cursor c = db.rawQuery(sql, new String[]{ym})) {
+            while (c.moveToNext()) {
+                String cat = c.getString(0);
+                double total = c.isNull(1) ? 0.0 : c.getDouble(1);
+                result.put(cat, total);
             }
         }
         return result;
