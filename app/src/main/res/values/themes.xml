@@ -7,4 +7,7 @@
 
     <!-- Publiczny motyw używany w manifestcie -->
     <style name="Theme.Asystent_Ekologiczny" parent="Base.Theme.Asystent_Ekologiczny" />
+
+    <!-- Alias dla motywu używanego w AndroidManifest.xml -->
+    <style name="Theme.AsystentEkologiczny" parent="Theme.Asystent_Ekologiczny" />
 </resources>

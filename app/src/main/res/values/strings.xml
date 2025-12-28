@@ -206,4 +206,35 @@
     <string name="reports_date_placeholder">Wybierz datę</string>
     <string name="reports_calculate_range">Oblicz zakres</string>
     <string name="reports_error_date_range">Błędny zakres dat</string>
+
+    <!-- Raporty: eksport do CSV -->
+    <string name="reports_export_csv">Eksportuj CSV</string>
+    <string name="reports_export_csv_success">Raport zapisany do CSV</string>
+    <string name="reports_export_csv_error">Błąd zapisu raportu do CSV</string>
+
+    <!-- Raporty: eksport CSV - nagłówki -->
+    <string name="csv_report_header">Raport ekologiczny</string>
+    <string name="csv_period_from">Okres od</string>
+    <string name="csv_period_to">do</string>
+    <string name="csv_metric_label">Metryka</string>
+    <string name="csv_value_label">Wartość</string>
+    <string name="csv_sum_expenses">Suma wydatków</string>
+    <string name="csv_avg_price">Średnia cena</string>
+    <string name="csv_sum_deposits">Suma odzyskanych kaucji</string>
+    <string name="csv_expired_products">Przeterminowane produkty</string>
+    <string name="csv_category_expenses">Wydatki według kategorii</string>
+    <string name="csv_category_sum">Suma</string>
+
+    <!-- Raporty: eksport do PDF -->
+    <string name="reports_share_pdf_title">Udostępnij raport PDF</string>
+    <string name="reports_export_pdf_error">Nie udało się wyeksportować raportu PDF.</string>
+    <string name="pdf_title">Raport wydatków i kaucji</string>
+    <string name="pdf_range_label">Zakres: %1$s - %2$s</string>
+    <string name="pdf_sum_expenses">Suma wydatków: %1$s</string>
+    <string name="pdf_sum_deposits">Suma zwróconych kaucji: %1$s</string>
+    <string name="pdf_avg_price">Średnia cena: %1$s</string>
+    <string name="pdf_expired_count">Liczba przeterminowanych: %1$d</string>
+    <string name="pdf_category_header">Wydatki wg kategorii:</string>
+    <string name="pdf_bar_chart_title">Wykres: wydatki vs kaucje</string>
+    <string name="pdf_pie_chart_title">Wykres: udział kategorii</string>
 </resources>

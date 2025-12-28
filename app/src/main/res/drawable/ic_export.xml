@@ -4,14 +4,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-
-    <!-- Kreska u góry -->
     <path
-        android:fillColor="@color/text_secondary"
-        android:pathData="M5,4h14v2H5V4z"/>
-
-    <!-- Strzałka w górę (export / upload) -->
-    <path
-        android:fillColor="@color/text_secondary"
-        android:pathData="M13,20v-8.17l2.59,2.58L17,13l-5,-5 -5,5 1.41,1.41L11,11.83V20h2z"/>
+        android:fillColor="@android:color/black"
+        android:pathData="M5,5h4v2H7v10h10V7h-2V5h4v14H5zM11,3h2v8h3l-4,4 -4,-4h3z" />
 </vector>
+

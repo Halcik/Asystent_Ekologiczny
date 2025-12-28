@@ -1,18 +1,34 @@
 package com.example.asystent_ekologiczny;
 
 import android.app.DatePickerDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -30,6 +46,9 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
@@ -59,6 +78,8 @@ public class ReportsFragment extends Fragment {
     private TextView dateFromTv;
     private TextView dateToTv;
     private Button calcRangeBtn;
+    // dodany przycisk eksportu PDF
+    private ImageButton exportPdfBtn;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
 
@@ -67,6 +88,15 @@ public class ReportsFragment extends Fragment {
         DecimalFormat df = new DecimalFormat("#,##0.00", symbols);
         return "PLN " + df.format(value);
     }
+
+    // pola do trzymania ostatniego wyniku raportu
+    private String lastFrom;
+    private String lastTo;
+    private double lastSum;
+    private double lastDepositSum;
+    private double lastAvg;
+    private int lastExpired;
+    private Map<String, Double> lastCategorySums;
 
     @Nullable
     @Override
@@ -78,6 +108,8 @@ public class ReportsFragment extends Fragment {
         dateFromTv = root.findViewById(R.id.tv_date_from);
         dateToTv = root.findViewById(R.id.tv_date_to);
         calcRangeBtn = root.findViewById(R.id.btn_calculate_range);
+        ImageButton exportBtn = root.findViewById(R.id.btn_export_csv);
+        exportPdfBtn = root.findViewById(R.id.btn_export_pdf);
         TextView resultTv = root.findViewById(R.id.tv_monthly_sum);
         TextView depositResultTv = root.findViewById(R.id.tv_deposit_sum);
         barChart = root.findViewById(R.id.bar_chart_expenses_vs_deposits);
@@ -105,6 +137,8 @@ public class ReportsFragment extends Fragment {
         updateBarChartForYear(Calendar.getInstance().get(Calendar.YEAR));
 
         calcRangeBtn.setOnClickListener(v -> recalculateForCurrentRange(resultTv, depositResultTv));
+        exportBtn.setOnClickListener(v -> exportReportToCsv());
+        exportPdfBtn.setOnClickListener(v -> exportReportToPdf());
 
         return root;
     }
@@ -166,6 +200,15 @@ public class ReportsFragment extends Fragment {
         double depSum = depositDbHelper.sumReturnedValueInRange(from, to);
         double avg = dbHelper.getAveragePriceInRange(from, to);
         int expired = dbHelper.getExpiredCountInRange(from, to);
+
+        // zapamiętujemy ostatnie wartości, aby móc je wyeksportować
+        lastFrom = from;
+        lastTo = to;
+        lastSum = sum;
+        lastDepositSum = depSum;
+        lastAvg = avg;
+        lastExpired = expired;
+        lastCategorySums = dbHelper.getCategorySumsInRange(from, to);
 
         resultTv.setText(getString(R.string.reports_monthly_sum_result, formatPln(sum)));
         depositResultTv.setText(getString(R.string.reports_deposit_sum_result, formatPln(depSum)));
@@ -367,6 +410,341 @@ public class ReportsFragment extends Fragment {
         categoryPieChart.setEntryLabelColor(textColor);
         categoryPieChart.setData(data);
         categoryPieChart.invalidate();
+    }
+
+    private void exportReportToCsv() {
+        if (lastFrom == null || lastTo == null) {
+            Toast.makeText(requireContext(), R.string.reports_error_date_range, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (downloads == null) throw new IllegalStateException("Brak katalogu Pobrane");
+            if (!downloads.exists() && !downloads.mkdirs()) {
+                throw new IllegalStateException("Nie udało się utworzyć katalogu Pobrane: " + downloads.getAbsolutePath());
+            }
+
+            String fileName = "raport_ekologiczny_" + lastFrom + "_" + lastTo + ".csv";
+            fileName = fileName.replace(":", "-");
+            File outFile = new File(downloads, fileName);
+
+            Log.d(TAG, "Eksport raportu do pliku: " + outFile.getAbsolutePath());
+
+            FileOutputStream fos = new FileOutputStream(outFile);
+            OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
+
+            // Wszystkie teksty z resources - żadnych hardcoded stringów!
+            writer.write(getString(R.string.csv_report_header) + ";" +
+                        getString(R.string.csv_period_from) + ";" + lastFrom + ";" +
+                        getString(R.string.csv_period_to) + ";" + lastTo + "\n");
+            writer.write(getString(R.string.csv_metric_label) + ";" +
+                        getString(R.string.csv_value_label) + "\n");
+            writer.write(getString(R.string.csv_sum_expenses) + ";" + lastSum + "\n");
+            writer.write(getString(R.string.csv_avg_price) + ";" + lastAvg + "\n");
+            writer.write(getString(R.string.csv_sum_deposits) + ";" + lastDepositSum + "\n");
+            writer.write(getString(R.string.csv_expired_products) + ";" + lastExpired + "\n\n");
+
+            writer.write(getString(R.string.csv_category_expenses) + ";" +
+                        getString(R.string.csv_category_sum) + "\n");
+            if (lastCategorySums != null) {
+                for (Map.Entry<String, Double> e : lastCategorySums.entrySet()) {
+                    writer.write(e.getKey() + ";" + e.getValue() + "\n");
+                }
+            }
+            writer.flush();
+            writer.close();
+
+            Uri uri = FileProvider.getUriForFile(
+                    requireContext(),
+                    requireContext().getPackageName() + ".fileprovider",
+                    outFile
+            );
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/csv");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.reports_export_csv)));
+
+        } catch (Exception e) {
+            Log.e(TAG, "CSV export failed: " + e.getMessage(), e);
+            Toast.makeText(requireContext(), R.string.reports_export_csv_error, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void exportReportToPdf() {
+        if (lastFrom == null || lastTo == null) {
+            Toast.makeText(requireContext(), R.string.reports_error_date_range, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            String fileName = "raport_ekologiczny_" + lastFrom + "_" + lastTo + ".pdf";
+            fileName = fileName.replace(":" , "-");
+
+            Uri uri;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Zapis przez MediaStore do Pobranych
+                ContentResolver resolver = requireContext().getContentResolver();
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
+                values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) {
+                    throw new IllegalStateException("Nie udało się utworzyć wpisu w MediaStore dla PDF");
+                }
+
+                PdfDocument document = createPdfDocument();
+                try (java.io.OutputStream os = resolver.openOutputStream(uri)) {
+                    if (os == null) throw new IllegalStateException("Brak strumienia wyjściowego dla PDF");
+                    document.writeTo(os);
+                }
+                document.close();
+
+                values.clear();
+                values.put(MediaStore.Downloads.IS_PENDING, 0);
+                resolver.update(uri, values, null, null);
+            } else {
+                // Starsze API: zapis bezpośrednio do katalogu Pobrane
+                File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (downloads == null) throw new IllegalStateException("Brak katalogu Pobrane");
+                if (!downloads.exists() && !downloads.mkdirs()) {
+                    throw new IllegalStateException("Nie udało się utworzyć katalogu Pobrane: " + downloads.getAbsolutePath());
+                }
+                File outFile = new File(downloads, fileName);
+
+                PdfDocument document = createPdfDocument();
+                try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                    document.writeTo(fos);
+                }
+                document.close();
+
+                uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        requireContext().getPackageName() + ".fileprovider",
+                        outFile
+                );
+            }
+
+            Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+            viewIntent.setDataAndType(uri, "application/pdf");
+            viewIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            if (viewIntent.resolveActivity(requireContext().getPackageManager()) != null) {
+                startActivity(viewIntent);
+            } else {
+                Intent share = new Intent(Intent.ACTION_SEND);
+                share.setType("application/pdf");
+                share.putExtra(Intent.EXTRA_STREAM, uri);
+                share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(Intent.createChooser(share, getString(R.string.reports_share_pdf_title)));
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "PDF export failed: " + e.getMessage(), e);
+            Toast.makeText(requireContext(), R.string.reports_export_pdf_error, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private PdfDocument createPdfDocument() {
+        PdfDocument document = new PdfDocument();
+
+        int pageWidth = 595;
+        int pageHeight = 842;
+        int margin = 40;
+
+        PdfDocument.PageInfo pageInfo =
+                new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create();
+        PdfDocument.Page page = document.startPage(pageInfo);
+        Canvas canvas = page.getCanvas();
+
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+
+        int y = margin;
+
+        paint.setTextSize(18f);
+        paint.setFakeBoldText(true);
+        canvas.drawText(getString(R.string.pdf_title), margin, y, paint);
+
+        paint.setFakeBoldText(false);
+        paint.setTextSize(12f);
+        y += 25;
+        canvas.drawText(getString(R.string.pdf_range_label, lastFrom, lastTo), margin, y, paint);
+        y += 18;
+
+        y += 10;
+        canvas.drawText(getString(R.string.pdf_sum_expenses, formatPln(lastSum)), margin, y, paint);
+        y += 16;
+        canvas.drawText(getString(R.string.pdf_sum_deposits, formatPln(lastDepositSum)), margin, y, paint);
+        y += 16;
+        canvas.drawText(getString(R.string.pdf_avg_price, formatPln(lastAvg)), margin, y, paint);
+        y += 16;
+        canvas.drawText(getString(R.string.pdf_expired_count, lastExpired), margin, y, paint);
+        y += 24;
+
+        if (lastCategorySums != null && !lastCategorySums.isEmpty()) {
+            canvas.drawText(getString(R.string.pdf_category_header), margin, y, paint);
+            y += 18;
+            for (Map.Entry<String, Double> entry : lastCategorySums.entrySet()) {
+                String line = "• " + entry.getKey() + ": " + formatPln(entry.getValue());
+                canvas.drawText(line, margin, y, paint);
+                y += 16;
+                if (y > pageHeight - 240) { // zostawiamy trochę więcej miejsca na wykresy
+                    document.finishPage(page);
+                    pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, document.getPages().size() + 1).create();
+                    page = document.startPage(pageInfo);
+                    canvas = page.getCanvas();
+                    y = margin;
+                }
+            }
+            y += 10;
+        }
+
+        // stały "maksymalny" rozmiar wykresu w jednostkach PDF, z zachowaniem proporcji
+        int chartAreaWidth = pageWidth - 2 * margin;
+        int chartAreaHeight = 220; // trochę wyższe niż wcześniej, ale nadal w granicach strony
+
+        // Wykres słupkowy
+        Bitmap barBitmap = createChartBitmap(barChart, chartAreaWidth, chartAreaHeight);
+        if (barBitmap != null) {
+            int scaledBarWidth = chartAreaWidth;
+            int scaledBarHeight = (int) (barBitmap.getHeight() * (chartAreaWidth / (float) barBitmap.getWidth()));
+            if (scaledBarHeight > chartAreaHeight) {
+                float ratio = chartAreaHeight / (float) scaledBarHeight;
+                scaledBarHeight = chartAreaHeight;
+                scaledBarWidth = (int) (scaledBarWidth * ratio);
+            }
+
+            if (y + scaledBarHeight + 40 > pageHeight - margin) {
+                document.finishPage(page);
+                pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, document.getPages().size() + 1).create();
+                page = document.startPage(pageInfo);
+                canvas = page.getCanvas();
+                y = margin;
+            }
+
+            int barX = margin + (chartAreaWidth - scaledBarWidth) / 2; // wyśrodkowanie
+
+            canvas.drawText(getString(R.string.pdf_bar_chart_title), margin, y, paint);
+            y += 18;
+
+            Rect srcRect = new Rect(0, 0, barBitmap.getWidth(), barBitmap.getHeight());
+            Rect destRect = new Rect(barX, y, barX + scaledBarWidth, y + scaledBarHeight);
+            canvas.drawBitmap(barBitmap, srcRect, destRect, null);
+            y += scaledBarHeight + 24;
+        }
+
+        // Wykres kołowy
+        Bitmap pieBitmap = createChartBitmap(categoryPieChart, chartAreaWidth, chartAreaHeight);
+        if (pieBitmap != null) {
+            int scaledPieWidth = chartAreaWidth;
+            int scaledPieHeight = (int) (pieBitmap.getHeight() * (chartAreaWidth / (float) pieBitmap.getWidth()));
+            if (scaledPieHeight > chartAreaHeight) {
+                float ratio = chartAreaHeight / (float) scaledPieHeight;
+                scaledPieHeight = chartAreaHeight;
+                scaledPieWidth = (int) (scaledPieWidth * ratio);
+            }
+
+            if (y + scaledPieHeight + 40 > pageHeight - margin) {
+                document.finishPage(page);
+                pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, document.getPages().size() + 1).create();
+                page = document.startPage(pageInfo);
+                canvas = page.getCanvas();
+                y = margin;
+            }
+
+            int pieX = margin + (chartAreaWidth - scaledPieWidth) / 2;
+
+            canvas.drawText(getString(R.string.pdf_pie_chart_title), margin, y, paint);
+            y += 18;
+
+            Rect srcRectPie = new Rect(0, 0, pieBitmap.getWidth(), pieBitmap.getHeight());
+            Rect destRectPie = new Rect(pieX, y, pieX + scaledPieWidth, y + scaledPieHeight);
+            canvas.drawBitmap(pieBitmap, srcRectPie, destRectPie, null);
+            y += scaledPieHeight + 24;
+        }
+
+        document.finishPage(page);
+        return document;
+    }
+
+    private Bitmap createChartBitmap(com.github.mikephil.charting.charts.Chart<?> chart, int width, int height) {
+        if (chart == null) return null;
+
+        int specWidth = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
+        int specHeight = View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY);
+        chart.measure(specWidth, specHeight);
+        chart.layout(0, 0, width, height);
+
+        // Wariant do PDF: małe, ciemne napisy (jak tekst w raporcie), żeby były widoczne, ale nie dominowały
+        int black = 0xFF000000;
+        float tinyTextSize = 4f;      // ogólny rozmiar małych napisów
+        float legendTextSize = 3f;    // jeszcze mniejsza legenda
+
+        if (chart instanceof BarChart) {
+            BarChart bc = (BarChart) chart;
+
+            // Osie
+            XAxis xAxis = bc.getXAxis();
+            xAxis.setTextColor(black);
+            xAxis.setTextSize(tinyTextSize);
+            xAxis.setDrawGridLines(false);
+
+            YAxis left = bc.getAxisLeft();
+            left.setTextColor(black);
+            left.setTextSize(tinyTextSize);
+            left.setDrawGridLines(false);
+
+            YAxis right = bc.getAxisRight();
+            right.setTextColor(black);
+            right.setTextSize(tinyTextSize);
+            right.setDrawGridLines(false);
+
+            // Legenda
+            Legend legend = bc.getLegend();
+            legend.setEnabled(true);
+            legend.setTextColor(black);
+            legend.setTextSize(legendTextSize);
+
+            // Wartości nad słupkami
+            if (bc.getData() != null) {
+                for (com.github.mikephil.charting.interfaces.datasets.IBarDataSet set : bc.getData().getDataSets()) {
+                    set.setValueTextColor(black);
+                    set.setValueTextSize(tinyTextSize);
+                    set.setDrawValues(true);
+                }
+            }
+        } else if (chart instanceof PieChart) {
+            PieChart pc = (PieChart) chart;
+
+            // Legenda
+            Legend legend = pc.getLegend();
+            legend.setEnabled(true);
+            legend.setTextColor(black);
+            legend.setTextSize(legendTextSize);
+
+            // Etykiety przy segmentach
+            pc.setDrawEntryLabels(true);
+            pc.setEntryLabelColor(black);
+            pc.setEntryLabelTextSize(tinyTextSize);
+
+            if (pc.getData() != null && pc.getData().getDataSet() != null) {
+                pc.getData().getDataSet().setDrawValues(true);
+                pc.getData().getDataSet().setValueTextColor(black);
+                pc.getData().getDataSet().setValueTextSize(tinyTextSize);
+            }
+            // W PDF lepiej pokazać wartości surowe, nie procenty
+            pc.setUsePercentValues(false);
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(0xFFFFFFFF); // białe tło
+        chart.draw(canvas);
+        return bitmap;
     }
 
     @Override

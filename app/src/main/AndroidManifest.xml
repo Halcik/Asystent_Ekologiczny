@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    package="com.example.asystent_ekologiczny">
 
     <!-- Uprawnienia legacy (Android < 10) -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
@@ -18,7 +18,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Asystent_Ekologiczny">
+        android:theme="@style/Theme.AsystentEkologiczny">
 
         <!-- Konfiguracja Google Maps API Key-->
         <meta-data
@@ -39,7 +39,7 @@
         <!-- FileProvider dla eksportu plików -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.provider"
+            android:authorities="com.example.asystent_ekologiczny.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
