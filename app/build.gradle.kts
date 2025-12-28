@@ -70,4 +70,7 @@ dependencies {
 
     // Google Play Services Maps
     implementation(libs.play.services.maps)
+
+    // MPAndroidChart - Charts
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }

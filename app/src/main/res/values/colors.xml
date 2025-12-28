@@ -23,6 +23,8 @@
     <!-- Inne akcenty -->
     <color name="teal_700">#018786</color>
     <color name="solid_blue">#DFF4FA</color>
+    <color name="chart_expenses">#FF6200EE</color>
+    <color name="chart_deposits">#FF018786</color>
 
     <!-- Formularze -->
     <color name="input_background">#FFFFFFFF</color>

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Ekran raportów: nagłówek i placeholder pod przyszłe statystyki / wykresy -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -61,7 +63,7 @@
                         android:id="@+id/spinner_year"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0.6"
+                        android:layout_weight="0.9"
                         android:spinnerMode="dropdown"
                         android:prompt="@string/reports_hint_year" />
 
@@ -69,7 +71,7 @@
                         android:id="@+id/spinner_month"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1.4"
+                        android:layout_weight="1.1"
                         android:spinnerMode="dropdown"
                         android:prompt="@string/reports_hint_month"
                         android:textSize="16sp" />
@@ -157,5 +159,40 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Sekcja: Wykres słupkowy wydatków vs odzyskane kaucje -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_bar_chart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="64dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/bar_chart_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_bar_chart_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/bar_chart_expenses_vs_deposits"
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp"
+                    android:contentDescription="@string/reports_bar_chart_content_description" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

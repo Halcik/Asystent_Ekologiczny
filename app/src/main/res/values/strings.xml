@@ -135,6 +135,13 @@
     <string name="reports_deposit_sum_result">Suma: %1$s</string>
     <string name="reports_period_title">Okres raportu</string>
 
+    <!-- Wykres słupkowy: wydatki vs kaucje -->
+    <string name="reports_bar_chart_title">Porównanie wydatków i odzyskanych kaucji (miesięcznie)</string>
+    <string name="reports_bar_chart_no_data">Brak danych do wyświetlenia wykresu</string>
+    <string name="reports_bar_chart_content_description">Wykres słupkowy porównujący miesięczne wydatki i odzyskane kaucje w wybranym roku</string>
+    <string name="reports_label_expenses">Wydatki na produkty</string>
+    <string name="reports_label_deposits">Odzyskane kaucje</string>
+
     <!-- Miesiące - pomocnicza tablica do wyboru miesiąca -->
     <string-array name="months_names">
         <item>Styczeń</item>
@@ -149,6 +156,22 @@
         <item>Październik</item>
         <item>Listopad</item>
         <item>Grudzień</item>
+    </string-array>
+
+    <!-- Skrócone nazwy miesięcy do osi X wykresu -->
+    <string-array name="months_short_names">
+        <item>Sty</item>
+        <item>Lut</item>
+        <item>Mar</item>
+        <item>Kwi</item>
+        <item>Maj</item>
+        <item>Cze</item>
+        <item>Lip</item>
+        <item>Sie</item>
+        <item>Wrz</item>
+        <item>Paź</item>
+        <item>Lis</item>
+        <item>Gru</item>
     </string-array>
 
     <!-- Moduł kaucji - mapa punktów zwrotu -->
