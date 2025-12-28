@@ -78,8 +78,8 @@ public class ReportsFragment extends Fragment {
     private TextView dateFromTv;
     private TextView dateToTv;
     private Button calcRangeBtn;
-    // dodany przycisk eksportu PDF
-    private ImageButton exportPdfBtn;
+    // jeden przycisk eksportu z wyborem formatu
+    private ImageButton exportBtn;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
 
@@ -108,8 +108,7 @@ public class ReportsFragment extends Fragment {
         dateFromTv = root.findViewById(R.id.tv_date_from);
         dateToTv = root.findViewById(R.id.tv_date_to);
         calcRangeBtn = root.findViewById(R.id.btn_calculate_range);
-        ImageButton exportBtn = root.findViewById(R.id.btn_export_csv);
-        exportPdfBtn = root.findViewById(R.id.btn_export_pdf);
+        exportBtn = root.findViewById(R.id.btn_export);
         TextView resultTv = root.findViewById(R.id.tv_monthly_sum);
         TextView depositResultTv = root.findViewById(R.id.tv_deposit_sum);
         barChart = root.findViewById(R.id.bar_chart_expenses_vs_deposits);
@@ -137,10 +136,34 @@ public class ReportsFragment extends Fragment {
         updateBarChartForYear(Calendar.getInstance().get(Calendar.YEAR));
 
         calcRangeBtn.setOnClickListener(v -> recalculateForCurrentRange(resultTv, depositResultTv));
-        exportBtn.setOnClickListener(v -> exportReportToCsv());
-        exportPdfBtn.setOnClickListener(v -> exportReportToPdf());
+        exportBtn.setOnClickListener(v -> showExportFormatDialog());
 
         return root;
+    }
+
+    private void showExportFormatDialog() {
+        if (lastFrom == null || lastTo == null) {
+            Toast.makeText(requireContext(), R.string.reports_error_date_range, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final CharSequence[] items = {
+                getString(R.string.reports_export_csv_option),
+                getString(R.string.reports_export_pdf_option),
+                getString(R.string.reports_export_html_option)
+        };
+
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle(R.string.reports_export_all_title)
+                .setItems(items, (dialog, which) -> {
+                    if (which == 0) {
+                        exportReportToCsv();
+                    } else if (which == 1) {
+                        exportReportToPdf();
+                    } else if (which == 2) {
+                        exportReportToHtml();
+                    }
+                })
+                .show();
     }
 
     private void showDatePicker(TextView target) {
@@ -546,6 +569,127 @@ public class ReportsFragment extends Fragment {
             Log.e(TAG, "PDF export failed: " + e.getMessage(), e);
             Toast.makeText(requireContext(), R.string.reports_export_pdf_error, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void exportReportToHtml() {
+        if (lastFrom == null || lastTo == null) {
+            Toast.makeText(requireContext(), R.string.reports_error_date_range, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (downloads == null) throw new IllegalStateException("Brak katalogu Pobrane");
+            if (!downloads.exists() && !downloads.mkdirs()) {
+                throw new IllegalStateException("Nie udało się utworzyć katalogu Pobrane: " + downloads.getAbsolutePath());
+            }
+
+            String fileName = "raport_ekologiczny_" + lastFrom + "_" + lastTo + ".html";
+            fileName = fileName.replace(":", "-");
+            File outFile = new File(downloads, fileName);
+
+            Log.d(TAG, "Eksport HTML do pliku: " + outFile.getAbsolutePath());
+
+            FileOutputStream fos = new FileOutputStream(outFile);
+            OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
+
+            String html = buildHtmlReport();
+            writer.write(html);
+            writer.flush();
+            writer.close();
+
+            Uri uri = FileProvider.getUriForFile(
+                    requireContext(),
+                    requireContext().getPackageName() + ".fileprovider",
+                    outFile
+            );
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/html");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT,
+                    getString(R.string.reports_email_subject_html, lastFrom, lastTo));
+
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.reports_export_html_title)));
+
+        } catch (Exception e) {
+            Log.e(TAG, "HTML export failed: " + e.getMessage(), e);
+            Toast.makeText(requireContext(), R.string.reports_export_html_error, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private String buildHtmlReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html>\n")
+          .append("<html lang=\"pl\">\n")
+          .append("<head>\n")
+          .append("  <meta charset=\"UTF-8\"/>\n")
+          .append("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n")
+          .append("  <title>").append(getString(R.string.pdf_title)).append("</title>\n")
+          .append("  <style>\n")
+          .append("    body { font-family: -apple-system, Roboto, Arial, sans-serif; margin: 16px; background-color: #fafafa; color: #222; }\n")
+          .append("    h1 { font-size: 20px; margin-bottom: 4px; }\n")
+          .append("    h2 { font-size: 16px; margin-top: 16px; margin-bottom: 4px; }\n")
+          .append("    .section { background: #ffffff; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n")
+          .append("    .muted { color: #666; font-size: 12px; }\n")
+          .append("    ul { padding-left: 20px; }\n")
+          .append("    table { width: 100%; border-collapse: collapse; margin-top: 8px; }\n")
+          .append("    th, td { border-bottom: 1px solid #ddd; padding: 6px 4px; text-align: left; font-size: 12px; }\n")
+          .append("    th { background-color: #f0f0f0; }\n")
+          .append("  </style>\n")
+          .append("</head>\n")
+          .append("<body>\n");
+
+        // Nagłówek
+        sb.append("<div class=\"section\">\n")
+          .append("  <h1>").append(getString(R.string.pdf_title)).append("</h1>\n")
+          .append("  <div class=\"muted\">")
+          .append(getString(R.string.pdf_range_label, lastFrom, lastTo))
+          .append("</div>\n")
+          .append("</div>\n");
+
+        // Podsumowanie liczbowe
+        sb.append("<div class=\"section\">\n")
+          .append("  <h2>").append(getString(R.string.reports_monthly_sum_title)).append("</h2>\n")
+          .append("  <p>")
+          .append(getString(R.string.pdf_sum_expenses, formatPln(lastSum)))
+          .append("<br/>")
+          .append(getString(R.string.pdf_sum_deposits, formatPln(lastDepositSum)))
+          .append("<br/>")
+          .append(getString(R.string.pdf_avg_price, formatPln(lastAvg)))
+          .append("<br/>")
+          .append(getString(R.string.pdf_expired_count, lastExpired))
+          .append("</p>\n")
+          .append("</div>\n");
+
+        // Wydatki wg kategorii
+        sb.append("<div class=\"section\">\n")
+          .append("  <h2>").append(getString(R.string.reports_category_sum_title)).append("</h2>\n");
+        if (lastCategorySums != null && !lastCategorySums.isEmpty()) {
+            sb.append("  <table>\n")
+              .append("    <thead><tr><th>")
+              .append(getString(R.string.csv_category_expenses))
+              .append("</th><th style=\"text-align:right;\">")
+              .append(getString(R.string.csv_category_sum))
+              .append("</th></tr></thead>\n")
+              .append("    <tbody>\n");
+            for (Map.Entry<String, Double> entry : lastCategorySums.entrySet()) {
+                sb.append("      <tr><td>")
+                  .append(entry.getKey())
+                  .append("</td><td style=\"text-align:right;\">")
+                  .append(formatPln(entry.getValue()))
+                  .append("</td></tr>\n");
+            }
+            sb.append("    </tbody>\n  </table>\n");
+        } else {
+            sb.append("  <p class=\"muted\">")
+              .append(getString(R.string.reports_category_sum_placeholder))
+              .append("</p>\n");
+        }
+        sb.append("</div>\n");
+
+        sb.append("</body>\n</html>\n");
+        return sb.toString();
     }
 
     private PdfDocument createPdfDocument() {

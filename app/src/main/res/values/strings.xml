@@ -237,4 +237,15 @@
     <string name="pdf_category_header">Wydatki wg kategorii:</string>
     <string name="pdf_bar_chart_title">Wykres: wydatki vs kaucje</string>
     <string name="pdf_pie_chart_title">Wykres: udział kategorii</string>
+
+    <!-- Raporty: eksport do HTML -->
+    <string name="reports_export_html_title">Eksportuj HTML</string>
+    <string name="reports_export_html_error">Nie udało się wyeksportować raportu HTML.</string>
+    <string name="reports_email_subject_html">Raport HTML: %1$s - %2$s</string>
+
+    <!-- Raporty: wspólny eksport (dialog wyboru formatu) -->
+    <string name="reports_export_all_title">Eksportuj raport</string>
+    <string name="reports_export_csv_option">CSV</string>
+    <string name="reports_export_pdf_option">PDF</string>
+    <string name="reports_export_html_option">HTML</string>
 </resources>

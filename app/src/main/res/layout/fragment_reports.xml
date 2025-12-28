@@ -115,8 +115,9 @@
                             android:layout_weight="1"
                             android:text="@string/reports_calculate_range" />
 
+                        <!-- Jeden przycisk eksportu z wyborem formatu -->
                         <ImageButton
-                            android:id="@+id/btn_export_csv"
+                            android:id="@+id/btn_export"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -124,24 +125,9 @@
                             android:padding="8dp"
                             android:background="@android:color/transparent"
                             android:tint="?attr/colorPrimary"
-                            android:contentDescription="@string/reports_export_csv"
+                            android:contentDescription="@string/reports_export_all_title"
                             android:src="@drawable/ic_export" />
-
-                        <!-- Nowy przycisk: eksport raportu do PDF -->
-                        <ImageButton
-                            android:id="@+id/btn_export_pdf"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:padding="8dp"
-                            android:background="@android:color/transparent"
-                            android:tint="?attr/colorPrimary"
-                            android:contentDescription="@string/reports_share_pdf_title"
-                            android:src="@drawable/ic_picture_as_pdf_24" />
-
                     </LinearLayout>
-
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
