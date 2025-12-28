@@ -1,13 +1,13 @@
 package com.example.asystent_ekologiczny;
 
+import android.app.DatePickerDialog;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -32,14 +32,18 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 
 /**
- * Raporty: obliczanie sumy wydatków miesięcznie i wykres słupkowy wydatki vs odzyskane kaucje.
+ * Raporty: obliczanie sumy wydatków, średniej ceny, kaucji i udziału kategorii
+ * w zadanym zakresie dat (purchase_date, returned_at) oraz wykresy.
  */
 public class ReportsFragment extends Fragment {
 
@@ -52,9 +56,13 @@ public class ReportsFragment extends Fragment {
     private TextView avgPriceTv;
     private TextView expiredCountTv;
     private PieChart categoryPieChart;
+    private TextView dateFromTv;
+    private TextView dateToTv;
+    private Button calcRangeBtn;
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
 
     private String formatPln(double value) {
-        // Użyj lokalnych separatorów, ale poprzedź wartość "PLN " ze zwykłą spacją
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.getDefault());
         DecimalFormat df = new DecimalFormat("#,##0.00", symbols);
         return "PLN " + df.format(value);
@@ -67,9 +75,9 @@ public class ReportsFragment extends Fragment {
         dbHelper = new ProductDbHelper(requireContext());
         depositDbHelper = new DepositDbHelper(requireContext());
 
-        Spinner yearSpinner = root.findViewById(R.id.spinner_year);
-        Spinner monthSpinner = root.findViewById(R.id.spinner_month);
-        Button calcBtn = root.findViewById(R.id.btn_calculate_monthly_sum);
+        dateFromTv = root.findViewById(R.id.tv_date_from);
+        dateToTv = root.findViewById(R.id.tv_date_to);
+        calcRangeBtn = root.findViewById(R.id.btn_calculate_range);
         TextView resultTv = root.findViewById(R.id.tv_monthly_sum);
         TextView depositResultTv = root.findViewById(R.id.tv_deposit_sum);
         barChart = root.findViewById(R.id.bar_chart_expenses_vs_deposits);
@@ -78,93 +86,100 @@ public class ReportsFragment extends Fragment {
         expiredCountTv = root.findViewById(R.id.tv_expired_count);
         categoryPieChart = root.findViewById(R.id.pie_chart_categories);
 
-        // Konfiguracja spinnera miesięcy
-        ArrayAdapter<CharSequence> monthsAdapter = ArrayAdapter.createFromResource(requireContext(), R.array.months_names, android.R.layout.simple_spinner_item);
-        monthsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        monthSpinner.setAdapter(monthsAdapter);
-
-        // Konfiguracja spinnera lat (ostatnie 10 lat od bieżącego w dół)
+        // Domyślny zakres: od początku bieżącego miesiąca do dziś
         Calendar cal = Calendar.getInstance();
-        int currentYear = cal.get(Calendar.YEAR);
-        List<String> years = new ArrayList<>();
-        for (int i = 0; i < 10; i++) { years.add(String.valueOf(currentYear - i)); }
-        ArrayAdapter<String> yearsAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, years);
-        yearsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        yearSpinner.setAdapter(yearsAdapter);
-        yearSpinner.setSelection(0); // bieżący rok na górze
+        String todayStr = dateFormat.format(cal.getTime());
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        String monthStartStr = dateFormat.format(cal.getTime());
+        dateFromTv.setText(monthStartStr);
+        dateToTv.setText(todayStr);
 
-        int currentMonthIndex = cal.get(Calendar.MONTH); // 0-11
-        monthSpinner.setSelection(currentMonthIndex);
+        dateFromTv.setOnClickListener(v -> showDatePicker(dateFromTv));
+        dateToTv.setOnClickListener(v -> showDatePicker(dateToTv));
 
-        // Automatyczne przeliczenie dla bieżącego miesiąca
-        int currentMonth = currentMonthIndex + 1; // 1-12
-        double initialSum = dbHelper.getMonthlySum(currentYear, currentMonth);
-        double initialDepositSum = depositDbHelper.sumReturnedValueInMonth(currentYear, currentMonth);
-        double initialAvg = dbHelper.getMonthlyAveragePrice(currentYear, currentMonth);
-        int initialExpired = dbHelper.getExpiredProductsCountForMonth(currentYear, currentMonth);
-        resultTv.setText(getString(R.string.reports_monthly_sum_result, formatPln(initialSum)));
-        depositResultTv.setText(getString(R.string.reports_deposit_sum_result, formatPln(initialDepositSum)));
-        avgPriceTv.setText(getString(R.string.reports_monthly_avg_result, formatPln(initialAvg)));
-        expiredCountTv.setText(getString(R.string.reports_expired_result, initialExpired));
+        // Pierwsze przeliczenie dla domyślnego zakresu
+        recalculateForCurrentRange(resultTv, depositResultTv);
 
-        // Konfiguracja wykresu i początkowe dane
+        // Konfiguracja wykresu słupkowego (dla całego roku bieżącego jak dotychczas)
         setupBarChart();
-        updateBarChartForYear(currentYear);
-        updateCategoryReport(currentYear, currentMonth);
-        updateCategoryPie(currentYear, currentMonth);
+        updateBarChartForYear(Calendar.getInstance().get(Calendar.YEAR));
 
-        // Zmiana roku -> odśwież wykres (raport kategorii zostaje powiązany z przyciskiem Oblicz)
-        yearSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                String selectedYearStr = (String) yearSpinner.getItemAtPosition(position);
-                try {
-                    int year = Integer.parseInt(selectedYearStr);
-                    updateBarChartForYear(year);
-                } catch (NumberFormatException ignored) { }
-            }
-
-            @Override
-            public void onNothingSelected(android.widget.AdapterView<?> parent) {
-                // nic
-            }
-        });
-
-        calcBtn.setOnClickListener(v -> {
-            try {
-                String selectedYearStr = (String) yearSpinner.getSelectedItem();
-                int year = Integer.parseInt(selectedYearStr);
-                int month = monthSpinner.getSelectedItemPosition() + 1; // 1-12
-                double sum = dbHelper.getMonthlySum(year, month);
-                double depSum = depositDbHelper.sumReturnedValueInMonth(year, month);
-                double avg = dbHelper.getMonthlyAveragePrice(year, month);
-                int expired = dbHelper.getExpiredProductsCountForMonth(year, month);
-                resultTv.setText(getString(R.string.reports_monthly_sum_result, formatPln(sum)));
-                depositResultTv.setText(getString(R.string.reports_deposit_sum_result, formatPln(depSum)));
-                avgPriceTv.setText(getString(R.string.reports_monthly_avg_result, formatPln(avg)));
-                expiredCountTv.setText(getString(R.string.reports_expired_result, expired));
-
-                // Odśwież raport kategorii dla wybranego okresu
-                updateCategoryReport(year, month);
-                updateCategoryPie(year, month);
-            } catch (Exception ex) {
-                resultTv.setText(getString(R.string.reports_error_number_format));
-                depositResultTv.setText(getString(R.string.reports_error_number_format));
-                avgPriceTv.setText(getString(R.string.reports_monthly_avg_placeholder));
-                expiredCountTv.setText(getString(R.string.reports_expired_placeholder));
-                if (categoryPieChart != null) {
-                    categoryPieChart.clear();
-                }
-            }
-        });
+        calcRangeBtn.setOnClickListener(v -> recalculateForCurrentRange(resultTv, depositResultTv));
 
         return root;
     }
 
-    private void updateCategoryReport(int year, int month) {
+    private void showDatePicker(TextView target) {
+        try {
+            Date current = dateFormat.parse(target.getText().toString());
+            Calendar cal = Calendar.getInstance();
+            if (current != null) cal.setTime(current);
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (DatePicker view, int y, int m, int d) -> {
+                Calendar chosen = Calendar.getInstance();
+                chosen.set(y, m, d, 0, 0, 0);
+                target.setText(dateFormat.format(chosen.getTime()));
+            }, year, month, day);
+            dialog.show();
+        } catch (ParseException e) {
+            // Jeśli parsowanie się nie udało, ustaw dzisiejszą datę
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
+            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (DatePicker view, int y, int m, int d) -> {
+                Calendar chosen = Calendar.getInstance();
+                chosen.set(y, m, d, 0, 0, 0);
+                target.setText(dateFormat.format(chosen.getTime()));
+            }, year, month, day);
+            dialog.show();
+        }
+    }
+
+    private boolean isValidRange(String from, String to) {
+        try {
+            Date dFrom = dateFormat.parse(from);
+            Date dTo = dateFormat.parse(to);
+            return dFrom != null && dTo != null && !dFrom.after(dTo);
+        } catch (ParseException e) {
+            return false;
+        }
+    }
+
+    private void recalculateForCurrentRange(TextView resultTv, TextView depositResultTv) {
+        String from = dateFromTv.getText().toString();
+        String to = dateToTv.getText().toString();
+        if (!isValidRange(from, to)) {
+            resultTv.setText(getString(R.string.reports_error_date_range));
+            depositResultTv.setText(getString(R.string.reports_error_date_range));
+            avgPriceTv.setText(getString(R.string.reports_monthly_avg_placeholder));
+            expiredCountTv.setText(getString(R.string.reports_expired_placeholder));
+            categorySumsTv.setText(getString(R.string.reports_category_sum_placeholder));
+            if (categoryPieChart != null) categoryPieChart.clear();
+            return;
+        }
+
+        double sum = dbHelper.getSumInRange(from, to);
+        double depSum = depositDbHelper.sumReturnedValueInRange(from, to);
+        double avg = dbHelper.getAveragePriceInRange(from, to);
+        int expired = dbHelper.getExpiredCountInRange(from, to);
+
+        resultTv.setText(getString(R.string.reports_monthly_sum_result, formatPln(sum)));
+        depositResultTv.setText(getString(R.string.reports_deposit_sum_result, formatPln(depSum)));
+        avgPriceTv.setText(getString(R.string.reports_monthly_avg_result, formatPln(avg)));
+        expiredCountTv.setText(getString(R.string.reports_expired_result, expired));
+
+        updateCategoryReport(from, to);
+        updateCategoryPie(from, to);
+    }
+
+    private void updateCategoryReport(String from, String to) {
         if (dbHelper == null || categorySumsTv == null) return;
 
-        Map<String, Double> categorySums = dbHelper.getCategorySumsForMonth(year, month);
+        Map<String, Double> categorySums = dbHelper.getCategorySumsInRange(from, to);
         if (categorySums.isEmpty()) {
             categorySumsTv.setText(getString(R.string.reports_category_sum_placeholder));
             return;
@@ -195,7 +210,6 @@ public class ReportsFragment extends Fragment {
         barChart.setDrawBarShadow(false);
         barChart.setFitBars(true);
 
-        // Oś X - miesiące
         XAxis xAxis = barChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setGranularity(1f);
@@ -204,12 +218,10 @@ public class ReportsFragment extends Fragment {
         String[] monthsShort = getResources().getStringArray(R.array.months_short_names);
         xAxis.setValueFormatter(new IndexAxisValueFormatter(monthsShort));
 
-        // Oś Y - tylko lewa
         YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.setGranularity(1f);
         barChart.getAxisRight().setEnabled(false);
 
-        // Rozpoznanie motywu (jasny / ciemny)
         int nightModeFlags = requireContext().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
 
@@ -217,7 +229,6 @@ public class ReportsFragment extends Fragment {
                 ? ContextCompat.getColor(requireContext(), android.R.color.white)
                 : ContextCompat.getColor(requireContext(), android.R.color.black);
 
-        // Legenda
         Legend legend = barChart.getLegend();
         legend.setEnabled(true);
         legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
@@ -226,7 +237,6 @@ public class ReportsFragment extends Fragment {
         legend.setDrawInside(false);
         legend.setTextColor(textColor);
 
-        // Kolory opisów osi
         xAxis.setTextColor(textColor);
         leftAxis.setTextColor(textColor);
 
@@ -258,7 +268,6 @@ public class ReportsFragment extends Fragment {
         expensesSet.setColor(colorExpenses);
         depositsSet.setColor(colorDeposits);
 
-        // Kolor wartości nad słupkami zależny od motywu (jasny/ciemny)
         int nightModeFlags = requireContext().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
         int valueTextColor = isDarkMode
@@ -270,7 +279,6 @@ public class ReportsFragment extends Fragment {
         expensesSet.setValueTextSize(10f);
         depositsSet.setValueTextSize(10f);
 
-        // Uproszczone formatowanie wartości (2 miejsca po przecinku)
         ValueFormatter valueFormatter = new ValueFormatter() {
             private final DecimalFormat df = new DecimalFormat("0.00");
             @Override
@@ -281,7 +289,6 @@ public class ReportsFragment extends Fragment {
         expensesSet.setValueFormatter(valueFormatter);
         depositsSet.setValueFormatter(valueFormatter);
 
-        // Wyłączanie zmiany koloru przy zaznaczeniu (highlight)
         expensesSet.setHighLightColor(colorExpenses);
         depositsSet.setHighLightColor(colorDeposits);
         expensesSet.setHighLightAlpha(255);
@@ -295,7 +302,6 @@ public class ReportsFragment extends Fragment {
         data.setBarWidth(barWidth);
         barChart.setData(data);
 
-        // Zakres X dla 12 miesięcy pogrupowanych
         int groupCount = 12;
         float startX = 0f;
         float groupWidth = data.getGroupWidth(groupSpace, barSpace);
@@ -306,10 +312,10 @@ public class ReportsFragment extends Fragment {
         barChart.invalidate();
     }
 
-    private void updateCategoryPie(int year, int month) {
+    private void updateCategoryPie(String from, String to) {
         if (dbHelper == null || categoryPieChart == null) return;
 
-        Map<String, Double> categorySums = dbHelper.getCategorySumsForMonth(year, month);
+        Map<String, Double> categorySums = dbHelper.getCategorySumsInRange(from, to);
         if (categorySums.isEmpty()) {
             categoryPieChart.clear();
             categoryPieChart.setNoDataText(getString(R.string.reports_category_sum_placeholder));
@@ -334,7 +340,6 @@ public class ReportsFragment extends Fragment {
         dataSet.setSelectionShift(5f);
         dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
 
-        // Rozpoznanie motywu (jasny / ciemny) dla koloru tekstu legendy i wartości
         int nightModeFlags = requireContext().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
         int textColor = isDarkMode
@@ -370,5 +375,6 @@ public class ReportsFragment extends Fragment {
         if (dbHelper != null) { dbHelper.close(); dbHelper = null; }
         if (depositDbHelper != null) { depositDbHelper.close(); depositDbHelper = null; }
         barChart = null;
+        categoryPieChart = null;
     }
 }

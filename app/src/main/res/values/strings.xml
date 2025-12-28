@@ -118,7 +118,7 @@
     <!-- Raporty -->
     <string name="reports_header">Raporty Ekologiczne</string>
     <string name="reports_subtitle">Monitoruj swoje oszczędności i wpływ na środowisko</string>
-    <string name="reports_monthly_sum_title">Suma wydatków (miesięcznie)</string>
+    <string name="reports_monthly_sum_title">Suma wydatków</string>
     <string name="reports_hint_year">Rok (np. 2025)</string>
     <string name="reports_hint_month">Miesiąc (1-12)</string>
     <string name="reports_calculate">Oblicz</string>
@@ -130,7 +130,7 @@
     <string name="reports_placeholder_stats">(Tutaj można dodać statystyki, wykresy itd.)</string>
 
     <!-- Raporty: kaucja -->
-    <string name="reports_deposit_sum_title">Suma odzyskanej kaucji (miesięcznie)</string>
+    <string name="reports_deposit_sum_title">Suma odzyskanej kaucji</string>
     <string name="reports_deposit_sum_placeholder">Suma: -</string>
     <string name="reports_deposit_sum_result">Suma: %1$s</string>
     <string name="reports_period_title">Okres raportu</string>
@@ -197,6 +197,13 @@
     <string name="reports_expired_result">Przeterminowane: %1$d</string>
 
     <!-- Raporty: wykres kołowy kategorii -->
-    <string name="reports_category_pie_title">Udział kategorii w wydatkach (wybrany miesiąc)</string>
+    <string name="reports_category_pie_title">Udział kategorii w wydatkach</string>
     <string name="reports_category_pie_content_description">Wykres kołowy pokazujący procentowy udział kategorii w wydatkach w wybranym okresie</string>
+
+    <!-- Raporty: wybór zakresu dat -->
+    <string name="reports_label_date_from">Od:</string>
+    <string name="reports_label_date_to">Do:</string>
+    <string name="reports_date_placeholder">Wybierz datę</string>
+    <string name="reports_calculate_range">Oblicz zakres</string>
+    <string name="reports_error_date_range">Błędny zakres dat</string>
 </resources>

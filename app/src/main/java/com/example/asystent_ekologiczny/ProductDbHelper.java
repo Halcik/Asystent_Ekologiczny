@@ -361,4 +361,78 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         }
         return count;
     }
+
+    /**
+     * Zwraca sumę wydatków (price) w zadanym zakresie dat zakupu [from, to].
+     * Daty w formacie yyyy-MM-dd.
+     */
+    public double getSumInRange(String dateFrom, String dateTo) {
+        SQLiteDatabase db = getReadableDatabase();
+        double sum = 0.0;
+        String sql = "SELECT SUM(" + COL_PRICE + ") FROM " + TABLE_PRODUCTS +
+                " WHERE " + COL_PURCHASE_DATE + " >= ? AND " + COL_PURCHASE_DATE + " <= ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{dateFrom, dateTo})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                sum = c.getDouble(0);
+            }
+        }
+        return sum;
+    }
+
+    /**
+     * Zwraca średnią cenę (price) w zadanym zakresie dat zakupu [from, to].
+     */
+    public double getAveragePriceInRange(String dateFrom, String dateTo) {
+        SQLiteDatabase db = getReadableDatabase();
+        double avg = 0.0;
+        String sql = "SELECT AVG(" + COL_PRICE + ") FROM " + TABLE_PRODUCTS +
+                " WHERE " + COL_PURCHASE_DATE + " >= ? AND " + COL_PURCHASE_DATE + " <= ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{dateFrom, dateTo})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                avg = c.getDouble(0);
+            }
+        }
+        return avg;
+    }
+
+    /**
+     * Zwraca mapę: kategoria -> suma wydatków w zadanym zakresie dat zakupu [from, to].
+     */
+    public Map<String, Double> getCategorySumsInRange(String dateFrom, String dateTo) {
+        Map<String, Double> result = new HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT " + COL_CATEGORY + ", SUM(" + COL_PRICE + ") AS total " +
+                "FROM " + TABLE_PRODUCTS + " " +
+                "WHERE " + COL_PURCHASE_DATE + " >= ? AND " + COL_PURCHASE_DATE + " <= ? " +
+                "AND " + COL_CATEGORY + " IS NOT NULL AND " + COL_CATEGORY + " != '' " +
+                "GROUP BY " + COL_CATEGORY + " ORDER BY total DESC";
+        try (Cursor c = db.rawQuery(sql, new String[]{dateFrom, dateTo})) {
+            while (c.moveToNext()) {
+                String cat = c.getString(0);
+                double total = c.isNull(1) ? 0.0 : c.getDouble(1);
+                result.put(cat, total);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Zwraca liczbę produktów, których termin ważności minął,
+     * a data zakupu jest w zadanym zakresie [from, to].
+     */
+    public int getExpiredCountInRange(String dateFrom, String dateTo) {
+        SQLiteDatabase db = getReadableDatabase();
+        String todayStr = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date());
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM " + TABLE_PRODUCTS +
+                " WHERE " + COL_PURCHASE_DATE + " >= ? AND " + COL_PURCHASE_DATE + " <= ? " +
+                "AND " + COL_EXPIRATION + " IS NOT NULL AND " + COL_EXPIRATION + " != '' " +
+                "AND " + COL_EXPIRATION + " < ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{dateFrom, dateTo, todayStr})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                count = c.getInt(0);
+            }
+        }
+        return count;
+    }
 }

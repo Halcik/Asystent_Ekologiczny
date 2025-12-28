@@ -183,6 +183,24 @@ public class DepositDbHelper extends SQLiteOpenHelper {
         return sum;
     }
 
+    /**
+     * Zwraca sumę wartości zwróconych kaucji w zadanym zakresie dat zwrotu [from, to].
+     * Zakładamy, że kolumna return_date (TEXT yyyy-MM-dd) przechowuje datę zwrotu.
+     */
+    public double sumReturnedValueInRange(String dateFrom, String dateTo) {
+        SQLiteDatabase db = getReadableDatabase();
+        double sum = 0.0;
+        String sql = "SELECT SUM(" + COL_VALUE + ") FROM " + TABLE_DEPOSITS +
+                " WHERE " + COL_RETURNED + " = 1 " +
+                "AND " + COL_RETURNED_AT + " >= ? AND " + COL_RETURNED_AT + " <= ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{dateFrom, dateTo})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                sum = c.getDouble(0);
+            }
+        }
+        return sum;
+    }
+
     private String todayIso() {
         return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().getTime());
     }
