@@ -6,11 +6,14 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Pomocnik SQLite dla tabeli produktów.
@@ -292,5 +295,70 @@ public class ProductDbHelper extends SQLiteOpenHelper {
             }
         }
         return result;
+    }
+
+    /**
+     * Zwraca średnią cenę produktów (price) dla podanego roku i miesiąca.
+     * Miesiąc: 1-12 (styczeń=1). Zwraca 0.0 jeśli brak danych.
+     */
+    public double getMonthlyAveragePrice(int year, int month) {
+        SQLiteDatabase db = getReadableDatabase();
+        String ym = String.format(Locale.ROOT, "%04d-%02d", year, month);
+        double avg = 0.0;
+        String sql = "SELECT AVG(" + COL_PRICE + ") FROM " + TABLE_PRODUCTS +
+                " WHERE strftime('%Y-%m', " + COL_PURCHASE_DATE + ") = ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{ym})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                avg = c.getDouble(0);
+            }
+        }
+        return avg;
+    }
+
+    /**
+     * Zwraca liczbę produktów, których termin ważności już minął (expiration_date < dzisiaj).
+     * Oczekuje formatu daty 'yyyy-MM-dd' (jak w formularzu).
+     */
+    public int getExpiredProductsCount() {
+        SQLiteDatabase db = getReadableDatabase();
+
+        // Dzisiejsza data w formacie yyyy-MM-dd
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
+        String todayStr = sdf.format(new Date());
+
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM " + TABLE_PRODUCTS +
+                " WHERE " + COL_EXPIRATION + " IS NOT NULL AND " + COL_EXPIRATION + " != '' " +
+                "AND " + COL_EXPIRATION + " < ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{todayStr})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                count = c.getInt(0);
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Zwraca liczbę produktów, których termin ważności minął
+     * i których data ważności jest w podanym roku i miesiącu.
+     * Miesiąc: 1-12 (styczeń=1).
+     */
+    public int getExpiredProductsCountForMonth(int year, int month) {
+        SQLiteDatabase db = getReadableDatabase();
+
+        String ym = String.format(Locale.ROOT, "%04d-%02d", year, month);
+        String todayStr = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date());
+
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM " + TABLE_PRODUCTS +
+                " WHERE " + COL_EXPIRATION + " IS NOT NULL AND " + COL_EXPIRATION + " != '' " +
+                "AND strftime('%Y-%m', " + COL_EXPIRATION + ") = ? " +
+                "AND " + COL_EXPIRATION + " < ?";
+        try (Cursor c = db.rawQuery(sql, new String[]{ym, todayStr})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                count = c.getInt(0);
+            }
+        }
+        return count;
     }
 }

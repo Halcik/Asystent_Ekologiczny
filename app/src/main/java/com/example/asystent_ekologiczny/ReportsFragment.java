@@ -16,14 +16,19 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -44,6 +49,9 @@ public class ReportsFragment extends Fragment {
     private DepositDbHelper depositDbHelper;
     private BarChart barChart;
     private TextView categorySumsTv;
+    private TextView avgPriceTv;
+    private TextView expiredCountTv;
+    private PieChart categoryPieChart;
 
     private String formatPln(double value) {
         // Użyj lokalnych separatorów, ale poprzedź wartość "PLN " ze zwykłą spacją
@@ -66,6 +74,9 @@ public class ReportsFragment extends Fragment {
         TextView depositResultTv = root.findViewById(R.id.tv_deposit_sum);
         barChart = root.findViewById(R.id.bar_chart_expenses_vs_deposits);
         categorySumsTv = root.findViewById(R.id.tv_category_sums);
+        avgPriceTv = root.findViewById(R.id.tv_monthly_avg_price);
+        expiredCountTv = root.findViewById(R.id.tv_expired_count);
+        categoryPieChart = root.findViewById(R.id.pie_chart_categories);
 
         // Konfiguracja spinnera miesięcy
         ArrayAdapter<CharSequence> monthsAdapter = ArrayAdapter.createFromResource(requireContext(), R.array.months_names, android.R.layout.simple_spinner_item);
@@ -89,15 +100,18 @@ public class ReportsFragment extends Fragment {
         int currentMonth = currentMonthIndex + 1; // 1-12
         double initialSum = dbHelper.getMonthlySum(currentYear, currentMonth);
         double initialDepositSum = depositDbHelper.sumReturnedValueInMonth(currentYear, currentMonth);
+        double initialAvg = dbHelper.getMonthlyAveragePrice(currentYear, currentMonth);
+        int initialExpired = dbHelper.getExpiredProductsCountForMonth(currentYear, currentMonth);
         resultTv.setText(getString(R.string.reports_monthly_sum_result, formatPln(initialSum)));
         depositResultTv.setText(getString(R.string.reports_deposit_sum_result, formatPln(initialDepositSum)));
+        avgPriceTv.setText(getString(R.string.reports_monthly_avg_result, formatPln(initialAvg)));
+        expiredCountTv.setText(getString(R.string.reports_expired_result, initialExpired));
 
         // Konfiguracja wykresu i początkowe dane
         setupBarChart();
         updateBarChartForYear(currentYear);
-
-        // Raport wydatków według kategorii dla bieżącego okresu
         updateCategoryReport(currentYear, currentMonth);
+        updateCategoryPie(currentYear, currentMonth);
 
         // Zmiana roku -> odśwież wykres (raport kategorii zostaje powiązany z przyciskiem Oblicz)
         yearSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
@@ -123,14 +137,24 @@ public class ReportsFragment extends Fragment {
                 int month = monthSpinner.getSelectedItemPosition() + 1; // 1-12
                 double sum = dbHelper.getMonthlySum(year, month);
                 double depSum = depositDbHelper.sumReturnedValueInMonth(year, month);
+                double avg = dbHelper.getMonthlyAveragePrice(year, month);
+                int expired = dbHelper.getExpiredProductsCountForMonth(year, month);
                 resultTv.setText(getString(R.string.reports_monthly_sum_result, formatPln(sum)));
                 depositResultTv.setText(getString(R.string.reports_deposit_sum_result, formatPln(depSum)));
+                avgPriceTv.setText(getString(R.string.reports_monthly_avg_result, formatPln(avg)));
+                expiredCountTv.setText(getString(R.string.reports_expired_result, expired));
 
                 // Odśwież raport kategorii dla wybranego okresu
                 updateCategoryReport(year, month);
+                updateCategoryPie(year, month);
             } catch (Exception ex) {
                 resultTv.setText(getString(R.string.reports_error_number_format));
                 depositResultTv.setText(getString(R.string.reports_error_number_format));
+                avgPriceTv.setText(getString(R.string.reports_monthly_avg_placeholder));
+                expiredCountTv.setText(getString(R.string.reports_expired_placeholder));
+                if (categoryPieChart != null) {
+                    categoryPieChart.clear();
+                }
             }
         });
 
@@ -280,6 +304,64 @@ public class ReportsFragment extends Fragment {
         barChart.groupBars(startX, groupSpace, barSpace);
 
         barChart.invalidate();
+    }
+
+    private void updateCategoryPie(int year, int month) {
+        if (dbHelper == null || categoryPieChart == null) return;
+
+        Map<String, Double> categorySums = dbHelper.getCategorySumsForMonth(year, month);
+        if (categorySums.isEmpty()) {
+            categoryPieChart.clear();
+            categoryPieChart.setNoDataText(getString(R.string.reports_category_sum_placeholder));
+            return;
+        }
+
+        List<PieEntry> entries = new ArrayList<>();
+        for (Map.Entry<String, Double> entry : categorySums.entrySet()) {
+            float value = (float) entry.getValue().doubleValue();
+            if (value <= 0f) continue;
+            entries.add(new PieEntry(value, entry.getKey()));
+        }
+
+        if (entries.isEmpty()) {
+            categoryPieChart.clear();
+            categoryPieChart.setNoDataText(getString(R.string.reports_category_sum_placeholder));
+            return;
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setSliceSpace(2f);
+        dataSet.setSelectionShift(5f);
+        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+
+        // Rozpoznanie motywu (jasny / ciemny) dla koloru tekstu legendy i wartości
+        int nightModeFlags = requireContext().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        boolean isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
+        int textColor = isDarkMode
+                ? ContextCompat.getColor(requireContext(), android.R.color.white)
+                : ContextCompat.getColor(requireContext(), android.R.color.black);
+
+        PieData data = new PieData(dataSet);
+        data.setValueTextSize(10f);
+        data.setValueTextColor(textColor);
+
+        categoryPieChart.setUsePercentValues(true);
+        categoryPieChart.getDescription().setEnabled(false);
+        categoryPieChart.setDrawHoleEnabled(true);
+        categoryPieChart.setHoleColor(android.R.color.transparent);
+        categoryPieChart.setTransparentCircleRadius(55f);
+
+        Legend legend = categoryPieChart.getLegend();
+        legend.setEnabled(true);
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setDrawInside(false);
+        legend.setTextColor(textColor);
+
+        categoryPieChart.setEntryLabelColor(textColor);
+        categoryPieChart.setData(data);
+        categoryPieChart.invalidate();
     }
 
     @Override

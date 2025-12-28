@@ -186,4 +186,17 @@
     <string name="reports_category_sum_title">Raport wydatków według kategorii</string>
     <string name="reports_category_sum_placeholder">Brak danych o kategoriach.</string>
     <string name="reports_category_sum_item">%1$s: %2$s</string>
+
+    <!-- Raporty: średnia cena produktu -->
+    <string name="reports_monthly_avg_placeholder">Średnia cena: -</string>
+    <string name="reports_monthly_avg_result">Średnia cena: %1$s</string>
+
+    <!-- Raporty: liczba przeterminowanych produktów -->
+    <string name="reports_expired_title">Liczba przeterminowanych produktów</string>
+    <string name="reports_expired_placeholder">Przeterminowane: -</string>
+    <string name="reports_expired_result">Przeterminowane: %1$d</string>
+
+    <!-- Raporty: wykres kołowy kategorii -->
+    <string name="reports_category_pie_title">Udział kategorii w wydatkach (wybrany miesiąc)</string>
+    <string name="reports_category_pie_content_description">Wykres kołowy pokazujący procentowy udział kategorii w wydatkach w wybranym okresie</string>
 </resources>
