@@ -13,8 +13,11 @@
         android:icon="@android:drawable/ic_menu_info_details"
         android:title="Raporty" />
     <item
+        android:id="@+id/navigation_education"
+        android:icon="@android:drawable/ic_menu_help"
+        android:title="Edukacja" />
+    <item
         android:id="@+id/navigation_settings"
         android:icon="@android:drawable/ic_menu_manage"
         android:title="Ustawienia" />
 </menu>
-

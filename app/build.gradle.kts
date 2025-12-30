@@ -39,10 +39,13 @@ android {
         }
     }
 
-    // Usuń duplikację - zostaw tylko jedną sekcję compileOptions
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        viewBinding = true
     }
 }
 
@@ -73,4 +76,10 @@ dependencies {
 
     // MPAndroidChart - Charts
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    // JSON - Gson do parsowania pliku edukacyjnego
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // ExoPlayer do odtwarzania wideo
+    implementation("com.google.android.exoplayer:exoplayer:2.19.1")
 }

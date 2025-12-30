@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private DepositFragment depositFragment;
     private ReportsFragment reportsFragment;
     private SettingsFragment settingsFragment;
+    private EducationFragment educationFragment;
 
     private int pendingNav = -1; // docelowa nawigacja po zamknięciu AddProductFragment
 
@@ -66,11 +67,13 @@ public class MainActivity extends AppCompatActivity {
             depositFragment = new DepositFragment();
             reportsFragment = new ReportsFragment();
             settingsFragment = new SettingsFragment();
+            educationFragment = new EducationFragment();
 
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.add(R.id.fragment_container, productsFragment, ProductsFragment.TAG);
             ft.add(R.id.fragment_container, depositFragment, DepositFragment.TAG).hide(depositFragment);
             ft.add(R.id.fragment_container, reportsFragment, ReportsFragment.TAG).hide(reportsFragment);
+            ft.add(R.id.fragment_container, educationFragment, EducationFragment.TAG).hide(educationFragment);
             ft.add(R.id.fragment_container, settingsFragment, SettingsFragment.TAG).hide(settingsFragment);
             ft.commit();
         } else {
@@ -78,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
             productsFragment = (ProductsFragment) getSupportFragmentManager().findFragmentByTag(ProductsFragment.TAG);
             depositFragment = (DepositFragment) getSupportFragmentManager().findFragmentByTag(DepositFragment.TAG);
             reportsFragment = (ReportsFragment) getSupportFragmentManager().findFragmentByTag(ReportsFragment.TAG);
+            educationFragment = (EducationFragment) getSupportFragmentManager().findFragmentByTag(EducationFragment.TAG);
             settingsFragment = (SettingsFragment) getSupportFragmentManager().findFragmentByTag(SettingsFragment.TAG);
         }
 
@@ -117,12 +121,15 @@ public class MainActivity extends AppCompatActivity {
         if (productsFragment != null) ft.hide(productsFragment);
         if (depositFragment != null) ft.hide(depositFragment);
         if (reportsFragment != null) ft.hide(reportsFragment);
+        if (educationFragment != null) ft.hide(educationFragment);
         if (settingsFragment != null) ft.hide(settingsFragment);
 
         if (itemId == R.id.navigation_deposit) {
             if (depositFragment != null) ft.show(depositFragment);
         } else if (itemId == R.id.navigation_reports) {
             if (reportsFragment != null) ft.show(reportsFragment);
+        } else if (itemId == R.id.navigation_education) {
+            if (educationFragment != null) ft.show(educationFragment);
         } else if (itemId == R.id.navigation_settings) {
             if (settingsFragment != null) ft.show(settingsFragment);
         } else { // navigation_products
@@ -139,6 +146,8 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setTitle("Kaucja");
         } else if (itemId == R.id.navigation_reports) {
             getSupportActionBar().setTitle("Raporty");
+        } else if (itemId == R.id.navigation_education) {
+            getSupportActionBar().setTitle("Edukacja");
         } else if (itemId == R.id.navigation_settings) {
             getSupportActionBar().setTitle("Ustawienia");
         } else {

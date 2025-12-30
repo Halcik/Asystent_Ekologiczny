@@ -36,6 +36,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".VideoPlayerActivity"
+            android:exported="false"
+            android:label="Odtwarzacz wideo" />
+
         <!-- FileProvider dla eksportu plików -->
         <provider
             android:name="androidx.core.content.FileProvider"

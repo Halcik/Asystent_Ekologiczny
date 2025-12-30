@@ -1,0 +1,13 @@
+[
+  {
+    "title": "TEST (YouTube)",
+    "description": "Testowy opis – otwiera film w YouTube.",
+    "videoUrl": "https://www.youtube.com/watch?v=6fd2kkLmSDQ"
+  },
+  {
+    "title": "Demo ExoPlayer – film MP4",
+    "description": "Przykładowy film odtwarzany bezpośrednio w aplikacji przez ExoPlayer.",
+    "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+  }
+]
+
