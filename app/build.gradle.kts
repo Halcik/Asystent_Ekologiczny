@@ -82,4 +82,9 @@ dependencies {
 
     // ExoPlayer do odtwarzania wideo
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")
+
+    //Glide do ładowania obrazów(miniatur)
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
 }

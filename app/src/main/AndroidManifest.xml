@@ -39,7 +39,13 @@
         <activity
             android:name=".VideoPlayerActivity"
             android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="Odtwarzacz wideo" />
+
+        <activity
+            android:name=".education.ui.EducationActivity"
+            android:exported="false"
+            android:label="Materiały Edukacyjne" />
 
         <!-- FileProvider dla eksportu plików -->
         <provider

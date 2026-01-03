@@ -5,12 +5,14 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView; // 1. Import ImageView
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide; // 2. Import Glide
 import com.example.asystent_ekologiczny.R;
 import com.example.asystent_ekologiczny.education.model.EducationItem;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -27,8 +29,6 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
     }
 
     private final List<EducationItem> items = new ArrayList<>();
-
-    // globalnie aktywny player i ViewHolder
     private ExoPlayer currentPlayer;
     private ViewHolder currentHolder;
     private final FullscreenListener fullscreenListener;
@@ -63,7 +63,6 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         return items.size();
     }
 
-    /** Zatrzymuje i chowa aktualny player (jeśli jest). */
     private void stopCurrentPlayer() {
         if (currentHolder != null) {
             currentHolder.hidePlayerOnly();
@@ -77,7 +76,6 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         currentHolder = null;
     }
 
-    /** Wywoływane przez ViewHolder przed startem nowego odtwarzacza. */
     private void startNewPlayer(ViewHolder holder, ExoPlayer player) {
         stopCurrentPlayer();
         currentHolder = holder;
@@ -87,6 +85,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleView;
         private final TextView descriptionView;
+        private final ImageView thumbnailView; // 3. Nowe pole miniatury
         private final View playerContainer;
         private final TextView textNowPlaying;
         private final TextView buttonFullscreen;
@@ -94,12 +93,15 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         private final PlayerView playerView;
         private final EducationAdapter adapter;
         private ExoPlayer player;
-
         private String lastUrl;
 
         ViewHolder(@NonNull View itemView, EducationAdapter adapter) {
             super(itemView);
             this.adapter = adapter;
+
+            // Pamiętaj: musisz dodać ImageView o id 'imageThumbnail' w item_education.xml
+            thumbnailView = itemView.findViewById(R.id.imageThumbnail);
+
             titleView = itemView.findViewById(R.id.textTitle);
             descriptionView = itemView.findViewById(R.id.textDescription);
             playerContainer = itemView.findViewById(R.id.playerContainer);
@@ -111,7 +113,6 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             buttonClosePlayer.setOnClickListener(v -> stopAndHidePlayer());
             buttonFullscreen.setOnClickListener(v -> {
                 if (lastUrl != null && !lastUrl.isEmpty() && adapter.fullscreenListener != null) {
-                    // dla YouTube zamiast ExoPlayera otwieramy natywną apkę/przeglądarkę
                     if (isYoutubeUrl(lastUrl)) {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(lastUrl));
                         itemView.getContext().startActivity(intent);
@@ -126,8 +127,43 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             titleView.setText(item.getTitle());
             descriptionView.setText(item.getDescription());
 
+            // --- 4. Dodana logika Miniatur z Glide ---
+            String thumbUrl = item.getThumbnailUrl(); // Upewnij się, że masz taką metodę w EducationItem
+            String videoUrl = item.getVideoUrl();
+
+            // Automatyczne generowanie miniatury dla YouTube jeśli brak w JSON
+            if (thumbUrl == null || thumbUrl.isEmpty()) {
+                if (isYoutubeUrl(videoUrl)) {
+                    try {
+                        String videoId = "";
+                        if (videoUrl.contains("v=")) {
+                            videoId = videoUrl.substring(videoUrl.indexOf("v=") + 2);
+                            if (videoId.contains("&")) videoId = videoId.substring(0, videoId.indexOf("&"));
+                        } else if (videoUrl.contains("youtu.be/")) {
+                            videoId = videoUrl.substring(videoUrl.lastIndexOf("/") + 1);
+                        }
+                        if (!videoId.isEmpty()) {
+                            thumbUrl = "https://img.youtube.com/vi/" + videoId + "/0.jpg";
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            // Ładowanie przez Glide
+            if (thumbnailView != null) {
+                Glide.with(itemView.getContext())
+                        .load(thumbUrl != null ? thumbUrl : R.drawable.ic_launcher_background) // Placeholder
+                        .centerCrop()
+                        .into(thumbnailView);
+            }
+
             itemView.setOnClickListener(v -> openVideo(item));
         }
+
+        // ... (reszta metod bez zmian: openVideo, isYoutubeUrl, stopAndHidePlayer, hidePlayerOnly)
+        // Wklejam je dla kompletności, abyś mógł skopiować cały plik
 
         private void openVideo(EducationItem item) {
             String url = item.getVideoUrl();
@@ -135,26 +171,21 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
                 Toast.makeText(itemView.getContext(), "Brak adresu wideo", Toast.LENGTH_SHORT).show();
                 return;
             }
-
             lastUrl = url;
-
             if (isYoutubeUrl(url)) {
-                // Dla YouTube od razu otwieramy zewnętrzną apkę/przeglądarkę, nie używamy ExoPlayera
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                 itemView.getContext().startActivity(intent);
                 return;
             }
-
             if (player == null) {
                 player = new ExoPlayer.Builder(itemView.getContext()).build();
                 playerView.setPlayer(player);
             }
-
-            // zgłoś do adaptera, że ten player staje się aktualnym
             adapter.startNewPlayer(this, player);
-
             textNowPlaying.setText(item.getTitle());
             playerContainer.setVisibility(View.VISIBLE);
+            // Ukrywamy miniaturę, gdy player gra (opcjonalne, ale ładne)
+            if (thumbnailView != null) thumbnailView.setVisibility(View.GONE);
 
             MediaItem mediaItem = MediaItem.fromUri(url);
             player.setMediaItem(mediaItem);
@@ -163,6 +194,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         }
 
         private boolean isYoutubeUrl(String url) {
+            if (url == null) return false;
             String lower = url.toLowerCase();
             return lower.contains("youtube.com") || lower.contains("youtu.be");
         }
@@ -173,8 +205,9 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
                 player.clearMediaItems();
             }
             playerContainer.setVisibility(View.GONE);
+            // Przywracamy miniaturę po zamknięciu playera
+            if (thumbnailView != null) thumbnailView.setVisibility(View.VISIBLE);
 
-            // jeśli ten ViewHolder był aktualnym, wyczyść referencje w adapterze
             if (adapter.currentHolder == this) {
                 adapter.currentHolder = null;
                 if (adapter.currentPlayer != null) {
@@ -184,9 +217,9 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             }
         }
 
-        /** Używane przez adapter: chowa UI bez zwalniania referencji ViewHolder. */
         private void hidePlayerOnly() {
             playerContainer.setVisibility(View.GONE);
+            if (thumbnailView != null) thumbnailView.setVisibility(View.VISIBLE);
         }
     }
 }

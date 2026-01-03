@@ -6,6 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     card_view:cardElevation="2dp"
+    card_view:cardCornerRadius="8dp"
     card_view:cardUseCompatPadding="true">
 
     <LinearLayout
@@ -14,66 +15,105 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <TextView
-            android:id="@+id/textTitle"
+        <!-- Górna sekcja: Miniatura + Teksty -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/textDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp" />
+            <!-- Dodane ImageView dla miniatury (Dodatkowe I) -->
+            <ImageView
+                android:id="@+id/imageThumbnail"
+                android:layout_width="120dp"
+                android:layout_height="80dp"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:background="#EEEEEE"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="Miniatura wideo" />
 
-        <!-- Kontener odtwarzacza w obrębie elementu listy -->
+            <!-- Kontener na teksty (obok obrazka) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:text="Tytuł filmu" />
+
+                <TextView
+                    android:id="@+id/textDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp"
+                    android:maxLines="3"
+                    android:ellipsize="end"
+                    android:text="Opis filmu..." />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Kontener odtwarzacza w obrębie elementu listy (domyślnie ukryty) -->
         <LinearLayout
             android:id="@+id/playerContainer"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone"
-            android:layout_marginTop="8dp"
-            android:background="#10FFFFFF">  <!-- delikatnie jaśniejsze, półprzezroczyste białe -->
+            android:layout_marginTop="12dp"
+            android:background="#F5F5F5"
+            android:padding="4dp">
 
+            <!-- Pasek kontroli nad wideo -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="4dp">
+                android:paddingBottom="4dp">
 
                 <TextView
                     android:id="@+id/textNowPlaying"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Odtwarzane wideo"
-                    android:textStyle="bold" />
+                    android:text="Odtwarzanie..."
+                    android:textStyle="bold"
+                    android:textSize="12sp"
+                    android:textColor="#333333"/>
 
                 <TextView
                     android:id="@+id/buttonFullscreen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Pełny ekran"
+                    android:text="Pełny Ekran"
+                    android:textAllCaps="true"
+                    android:textStyle="bold"
                     android:textColor="@android:color/holo_blue_dark"
-                    android:layout_marginEnd="8dp" />
+                    android:paddingEnd="16dp" />
 
                 <TextView
                     android:id="@+id/buttonClosePlayer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Zamknij"
+                    android:textAllCaps="true"
+                    android:textStyle="bold"
                     android:textColor="@android:color/holo_red_dark" />
             </LinearLayout>
 
+            <!-- Sam Player -->
             <com.google.android.exoplayer2.ui.PlayerView
                 android:id="@+id/playerView"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="220dp"
                 app:use_controller="true"
-                app:show_buffering="when_playing" />
+                app:show_buffering="when_playing"
+                app:resize_mode="fit" />
         </LinearLayout>
 
     </LinearLayout>
