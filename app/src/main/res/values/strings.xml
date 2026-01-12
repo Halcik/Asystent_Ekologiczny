@@ -1,7 +1,12 @@
 <resources>
-    <string name="app_name">Asystent_Ekologiczny</string>
+    <!-- Ogólne -->
+    <string name="app_name">Asystent Ekologiczny</string>
     <string name="back">Wstecz</string>
+
+    <!-- Formularz dodawania / edycji produktu -->
     <string name="add_product_title">Dodaj produkt</string>
+    <string name="edit_product_title">Edytuj produkt</string>
+    <string name="save_changes">Zapisz zmiany</string>
     <string name="hint_name">Nazwa produktu</string>
     <string name="hint_price">Cena (np. 4,50)</string>
     <string name="hint_expiration">Data ważności (yyyy-MM-dd)</string>
@@ -10,6 +15,8 @@
     <string name="hint_store">Sklep</string>
     <string name="hint_purchase">Data zakupu (yyyy-MM-dd)</string>
     <string name="save">Zapisz</string>
+
+    <!-- Szczegóły produktu -->
     <string name="details_title">Szczegóły produktu</string>
     <string name="label_name">Nazwa</string>
     <string name="label_price">Cena</string>
@@ -18,7 +25,227 @@
     <string name="label_description">Opis</string>
     <string name="label_store">Sklep</string>
     <string name="label_purchase">Data zakupu</string>
+    <string name="label_used">Zużyty</string>
+    <string name="label_active">Aktywny</string>
     <string name="not_available">–</string>
     <string name="details_not_found">Produkt nie znaleziony</string>
     <string name="category_icon_desc">Ikona kategorii</string>
+    <string name="price_format">%1$s zł</string>
+
+    <!-- Ustawienia: motyw -->
+    <string name="settings_theme_title">Motyw aplikacji</string>
+    <string name="theme_system">Systemowy</string>
+    <string name="theme_light">Jasny</string>
+    <string name="theme_dark">Ciemny</string>
+    <string name="settings_theme_desc">Wybierz preferowany motyw jasny / ciemny lub podążaj za ustawieniem systemowym.</string>
+
+    <!-- Tablice pomocnicze do ewentualnego użycia np. w Spinnerze (pozostawione dla przyszłej rozbudowy) -->
+    <string-array name="theme_entries">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="theme_values">
+        <item>system</item>
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
+
+    <!-- Akcje i komunikaty -->
+    <string name="action_edit">Edytuj</string>
+    <string name="action_duplicate">Duplikuj</string>
+    <string name="action_delete">Usuń</string>
+    <string name="action_toggle_used">Przełącz zużycie</string>
+    <string name="duplicate_success">Utworzono kopię</string>
+    <string name="duplicate_failed">Błąd duplikacji</string>
+    <string name="delete_confirm_title">Usuń produkt</string>
+    <string name="delete_confirm_message">Czy na pewno chcesz usunąć ten produkt?</string>
+    <string name="delete_yes">Usuń</string>
+    <string name="delete_no">Anuluj</string>
+    <string name="delete_success">Usunięto</string>
+    <string name="delete_failed">Błąd usuwania</string>
+
+    <!-- Import/Eksport -->
+    <string name="export">Eksportuj</string>
+    <string name="import_products">Importuj</string>
+    <string name="export_choose_format_title">Eksportuj produkty</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_json">JSON</string>
+    <string name="export_success">Eksport zakończony</string>
+    <string name="export_failed">Błąd eksportu</string>
+    <string name="import_success">Zaimportowano %1$d produktów</string>
+    <string name="import_failed">Błąd importu</string>
+    <string name="import_invalid_format">Nieobsługiwany format pliku</string>
+    <string name="import_pick_title">Wybierz plik do importu</string>
+    <string name="export_saved_downloads">Plik zapisany w Pobrane</string>
+    <string name="export_saved_downloads_share">Zapisano w Pobrane i otworzono udostępnianie</string>
+    <string name="export_write_failed">Nie udało się zapisać do Pobrane</string>
+
+    <!-- Produkty -->
+    <string name="products_header_title">Produkty Domowe</string>
+    <string name="products_header_subtitle">Śledź daty ważności i koszty, aby unikać marnowania żywności</string>
+    <string name="label_products_count">Produktów</string>
+    <string name="label_expiring_count">Tracą ważność</string>
+    <string name="view_list">Lista</string>
+    <string name="view_grid">Siatka</string>
+    <string name="filters_label">Filtry:</string>
+    <string name="price_label">Cena</string>
+    <string name="status_label">Status</string>
+    <string name="search_content_desc">Szukaj</string>
+    <string name="search_icon_desc">Ikona wyszukiwania</string>
+    <string name="search_hint">Szukaj...</string>
+    <string name="search_clear_desc">Wyczyść i zamknij</string>
+    <string name="fab_add_desc">Dodaj produkt</string>
+    <string name="number_zero">0</string>
+
+    <!-- Moduł kaucji: formularz i edycja -->
+    <string name="add_deposit_title">Dodaj opakowanie</string>
+    <string name="edit_deposit_title">Edytuj opakowanie</string>
+    <string name="hint_deposit_type">Typ opakowania (np. Butelka szklana 0,5L)</string>
+    <string name="hint_deposit_value">Wartość kaucji (zł)</string>
+    <string name="hint_deposit_barcode">Kod kreskowy (opcjonalnie)</string>
+
+
+    <!-- Moduł kaucji - ekran główny-->
+    <string name="deposit_sort">Kaucja</string>
+    <string name="deposit_type">Typ</string>
+
+    <!-- Moduł kaucji - element listy -->
+    <string name="label_returned">Zwrócone</string>
+    <string name="returned_desc">Oznacz opakowanie jako zwrócone</string>
+    <string name="deposit_footer_active_sum">Łączna wartość aktywnych kaucji: %1$.2f zł</string>
+
+    <!-- Raporty -->
+    <string name="reports_header">Raporty Ekologiczne</string>
+    <string name="reports_subtitle">Monitoruj swoje oszczędności i wpływ na środowisko</string>
+    <string name="reports_monthly_sum_title">Suma wydatków</string>
+    <string name="reports_hint_year">Rok (np. 2025)</string>
+    <string name="reports_hint_month">Miesiąc (1-12)</string>
+    <string name="reports_calculate">Oblicz</string>
+    <string name="reports_monthly_sum_placeholder">Suma: -</string>
+    <string name="reports_monthly_sum_result">Suma: %1$s</string>
+    <string name="reports_error_fill_inputs">Suma: brak danych (uzupełnij rok i miesiąc)</string>
+    <string name="reports_error_month_range">Suma: błąd (miesiąc 1-12)</string>
+    <string name="reports_error_number_format">Suma: błąd (nieprawidłowe liczby)</string>
+    <string name="reports_placeholder_stats">(Tutaj można dodać statystyki, wykresy itd.)</string>
+
+    <!-- Raporty: kaucja -->
+    <string name="reports_deposit_sum_title">Suma odzyskanej kaucji</string>
+    <string name="reports_deposit_sum_placeholder">Suma: -</string>
+    <string name="reports_deposit_sum_result">Suma: %1$s</string>
+    <string name="reports_period_title">Okres raportu</string>
+
+    <!-- Wykres słupkowy: wydatki vs kaucje -->
+    <string name="reports_bar_chart_title">Porównanie wydatków i odzyskanych kaucji (miesięcznie)</string>
+    <string name="reports_bar_chart_no_data">Brak danych do wyświetlenia wykresu</string>
+    <string name="reports_bar_chart_content_description">Wykres słupkowy porównujący miesięczne wydatki i odzyskane kaucje w wybranym roku</string>
+    <string name="reports_label_expenses">Wydatki na produkty</string>
+    <string name="reports_label_deposits">Odzyskane kaucje</string>
+
+    <!-- Miesiące - pomocnicza tablica do wyboru miesiąca -->
+    <string-array name="months_names">
+        <item>Styczeń</item>
+        <item>Luty</item>
+        <item>Marzec</item>
+        <item>Kwiecień</item>
+        <item>Maj</item>
+        <item>Czerwiec</item>
+        <item>Lipiec</item>
+        <item>Sierpień</item>
+        <item>Wrzesień</item>
+        <item>Październik</item>
+        <item>Listopad</item>
+        <item>Grudzień</item>
+    </string-array>
+
+    <!-- Skrócone nazwy miesięcy do osi X wykresu -->
+    <string-array name="months_short_names">
+        <item>Sty</item>
+        <item>Lut</item>
+        <item>Mar</item>
+        <item>Kwi</item>
+        <item>Maj</item>
+        <item>Cze</item>
+        <item>Lip</item>
+        <item>Sie</item>
+        <item>Wrz</item>
+        <item>Paź</item>
+        <item>Lis</item>
+        <item>Gru</item>
+    </string-array>
+
+    <!-- Moduł kaucji - mapa punktów zwrotu -->
+    <string name="deposit_map_button">Mapa punktów zwrotu</string>
+    <string name="deposit_map_dialog_title">Punkty zwrotu – mapa</string>
+    <string name="deposit_map_placeholder">Tu pojawi się mapa punktów zwrotu</string>
+
+    <!-- Podsumowanie miesięczne kaucji -->
+    <string name="deposit_monthly_summary_format">Zwrócone w tym miesiącu: %1$d</string>
+
+    <!-- Raporty: wydatki według kategorii -->
+    <string name="reports_category_sum_title">Raport wydatków według kategorii</string>
+    <string name="reports_category_sum_placeholder">Brak danych o kategoriach.</string>
+    <string name="reports_category_sum_item">%1$s: %2$s</string>
+
+    <!-- Raporty: średnia cena produktu -->
+    <string name="reports_monthly_avg_placeholder">Średnia cena: -</string>
+    <string name="reports_monthly_avg_result">Średnia cena: %1$s</string>
+
+    <!-- Raporty: liczba przeterminowanych produktów -->
+    <string name="reports_expired_title">Liczba przeterminowanych produktów</string>
+    <string name="reports_expired_placeholder">Przeterminowane: -</string>
+    <string name="reports_expired_result">Przeterminowane: %1$d</string>
+
+    <!-- Raporty: wykres kołowy kategorii -->
+    <string name="reports_category_pie_title">Udział kategorii w wydatkach</string>
+    <string name="reports_category_pie_content_description">Wykres kołowy pokazujący procentowy udział kategorii w wydatkach w wybranym okresie</string>
+
+    <!-- Raporty: wybór zakresu dat -->
+    <string name="reports_label_date_from">Od:</string>
+    <string name="reports_label_date_to">Do:</string>
+    <string name="reports_date_placeholder">Wybierz datę</string>
+    <string name="reports_calculate_range">Oblicz zakres</string>
+    <string name="reports_error_date_range">Błędny zakres dat</string>
+
+    <!-- Raporty: eksport do CSV -->
+    <string name="reports_export_csv">Eksportuj CSV</string>
+    <string name="reports_export_csv_success">Raport zapisany do CSV</string>
+    <string name="reports_export_csv_error">Błąd zapisu raportu do CSV</string>
+
+    <!-- Raporty: eksport CSV - nagłówki -->
+    <string name="csv_report_header">Raport ekologiczny</string>
+    <string name="csv_period_from">Okres od</string>
+    <string name="csv_period_to">do</string>
+    <string name="csv_metric_label">Metryka</string>
+    <string name="csv_value_label">Wartość</string>
+    <string name="csv_sum_expenses">Suma wydatków</string>
+    <string name="csv_avg_price">Średnia cena</string>
+    <string name="csv_sum_deposits">Suma odzyskanych kaucji</string>
+    <string name="csv_expired_products">Przeterminowane produkty</string>
+    <string name="csv_category_expenses">Wydatki według kategorii</string>
+    <string name="csv_category_sum">Suma</string>
+
+    <!-- Raporty: eksport do PDF -->
+    <string name="reports_share_pdf_title">Udostępnij raport PDF</string>
+    <string name="reports_export_pdf_error">Nie udało się wyeksportować raportu PDF.</string>
+    <string name="pdf_title">Raport wydatków i kaucji</string>
+    <string name="pdf_range_label">Zakres: %1$s - %2$s</string>
+    <string name="pdf_sum_expenses">Suma wydatków: %1$s</string>
+    <string name="pdf_sum_deposits">Suma zwróconych kaucji: %1$s</string>
+    <string name="pdf_avg_price">Średnia cena: %1$s</string>
+    <string name="pdf_expired_count">Liczba przeterminowanych: %1$d</string>
+    <string name="pdf_category_header">Wydatki wg kategorii:</string>
+    <string name="pdf_bar_chart_title">Wykres: wydatki vs kaucje</string>
+    <string name="pdf_pie_chart_title">Wykres: udział kategorii</string>
+
+    <!-- Raporty: eksport do HTML -->
+    <string name="reports_export_html_title">Eksportuj HTML</string>
+    <string name="reports_export_html_error">Nie udało się wyeksportować raportu HTML.</string>
+    <string name="reports_email_subject_html">Raport HTML: %1$s - %2$s</string>
+
+    <!-- Raporty: wspólny eksport (dialog wyboru formatu) -->
+    <string name="reports_export_all_title">Eksportuj raport</string>
+    <string name="reports_export_csv_option">CSV</string>
+    <string name="reports_export_pdf_option">PDF</string>
+    <string name="reports_export_html_option">HTML</string>
 </resources>

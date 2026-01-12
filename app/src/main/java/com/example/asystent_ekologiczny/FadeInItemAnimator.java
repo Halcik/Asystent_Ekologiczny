@@ -2,43 +2,44 @@ package com.example.asystent_ekologiczny;
 
 import android.view.View;
 
-import androidx.core.view.ViewCompat;
-import androidx.core.view.ViewPropertyAnimatorListener;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 
-/** Animator dodający łagodne pojawianie (fade-in) przy dodaniu produktu. */
+/**
+ * Slide-in z dołu dla dodawanych elementów RecyclerView (bez fade-in).
+ */
 public class FadeInItemAnimator extends DefaultItemAnimator {
 
-    public FadeInItemAnimator() {
-        setAddDuration(200); // czas animacji dodania
-    }
+    public FadeInItemAnimator() { setAddDuration(220); }
 
     @Override
     public boolean animateAdd(final RecyclerView.ViewHolder holder) {
-        holder.itemView.setAlpha(0f);
+        final View item = holder.itemView;
+        // Startowe przesunięcie w dół
+        float dy = item.getResources().getDisplayMetrics().density * 24f;
+        item.setTranslationY(dy);
         dispatchAddStarting(holder);
-        ViewCompat.animate(holder.itemView)
-                .alpha(1f)
+
+        item.animate()
+                .translationY(0f)
                 .setDuration(getAddDuration())
-                .setListener(new ViewPropertyAnimatorListener() {
-                    @Override public void onAnimationStart(View view) {}
-                    @Override public void onAnimationEnd(View view) {
-                        view.setAlpha(1f);
+                .setListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override public void onAnimationEnd(@NonNull android.animation.Animator animation) {
+                        item.setTranslationY(0f);
                         dispatchAddFinished(holder);
                     }
-                    @Override public void onAnimationCancel(View view) {
-                        view.setAlpha(1f);
+                    @Override public void onAnimationCancel(@NonNull android.animation.Animator animation) {
+                        item.setTranslationY(0f);
                     }
-                }).start();
+                });
         return true;
     }
 
     @Override
     public void endAnimation(RecyclerView.ViewHolder item) {
         item.itemView.animate().cancel();
-        item.itemView.setAlpha(1f);
+        item.itemView.setTranslationY(0f);
         super.endAnimation(item);
     }
 }
-

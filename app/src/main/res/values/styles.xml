@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Zaokrąglone czarne pola z białą ramką -->
+    <!-- Styl bazowy dla pól tekstowych (TextInputLayout) z zaokrąglonymi rogami i niestandardowymi kolorami -->
     <style name="AppTextInputBase" parent="Widget.Material3.TextInputLayout.OutlinedBox">
         <item name="boxBackgroundColor">@color/input_background</item>
         <item name="boxStrokeColor">@color/input_stroke</item>
@@ -13,6 +13,7 @@
         <item name="shapeAppearanceOverlay">@style/AppTextInputShape</item>
     </style>
 
+    <!-- Wariant stylu dla pól rozwijanych (Exposed Dropdown Menu) -->
     <style name="AppTextInputDropdown" parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
         <item name="boxBackgroundColor">@color/input_background</item>
         <item name="boxStrokeColor">@color/input_stroke</item>
@@ -25,12 +26,13 @@
         <item name="shapeAppearanceOverlay">@style/AppTextInputShape</item>
     </style>
 
+    <!-- Definicja kształtu używana przez pola tekstowe -->
     <style name="AppTextInputShape" parent="ShapeAppearance.Material3.Corner.Medium">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">12dp</item>
     </style>
 
-    <!-- Styl tekstu wewnątrz pól (opcjonalny) -->
+    <!-- Styl dla editText wewnątrz TextInputLayout -->
     <style name="AppTextInputEditText" parent="Widget.Material3.TextInputEditText.OutlinedBox">
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textColorHint">@color/text_hint</item>

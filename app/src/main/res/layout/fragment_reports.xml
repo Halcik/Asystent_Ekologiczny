@@ -1,36 +1,358 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Ekran raportów: nagłówek i placeholder pod przyszłe statystyki / wykresy -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Nagłówek -->
         <TextView
+            android:id="@+id/reports_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Raporty Ekologiczne"
+            android:text="@string/reports_header"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
+        <!-- Opis ekranu -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Monitoruj swoje oszczędności i wpływ na środowisko" />
+            android:text="@string/reports_subtitle" />
 
-        <LinearLayout
+        <!-- Ramka: Okres raportu -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_period"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="12dp">
-            <TextView
-                android:layout_width="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/card_background_ok"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="(Tutaj można dodać statystyki, wykresy itd.)" />
-        </LinearLayout>
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/reports_period_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_period_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="6dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_label_date_from"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:id="@+id/tv_date_from"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:padding="8dp"
+                            android:background="@drawable/bg_date_field"
+                            android:text="@string/reports_date_placeholder" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_label_date_to"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:id="@+id/tv_date_to"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:padding="8dp"
+                            android:background="@drawable/bg_date_field"
+                            android:text="@string/reports_date_placeholder" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="12dp">
+
+                        <Button
+                            android:id="@+id/btn_calculate_range"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/reports_calculate_range" />
+
+                        <!-- Jeden przycisk eksportu z wyborem formatu -->
+                        <ImageButton
+                            android:id="@+id/btn_export"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:padding="8dp"
+                            android:background="@android:color/transparent"
+                            android:tint="?attr/colorPrimary"
+                            android:contentDescription="@string/reports_export_all_title"
+                            android:src="@drawable/ic_export" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Sekcja: Miesięczna suma wydatków w ramce -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_monthly_sum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/monthly_sum_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_monthly_sum_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <!-- Wynik sumy -->
+                <TextView
+                    android:id="@+id/tv_monthly_sum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/reports_monthly_sum_placeholder"
+                    android:textStyle="bold" />
+
+                <!-- Średnia cena produktu w danym miesiącu -->
+                <TextView
+                    android:id="@+id/tv_monthly_avg_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/reports_monthly_avg_placeholder"
+                    android:textStyle="italic" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Sekcja: Liczba przeterminowanych produktów -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_expired"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_warning">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/expired_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_expired_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_expired_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_expired_placeholder"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Ramka: Suma odzyskanej kaucji -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_deposit_sum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/deposit_sum_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_deposit_sum_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <!-- Wspólne pola wyboru roku i miesiąca wykorzystujemy te same nad ramką wydatków -->
+                <TextView
+                    android:id="@+id/tv_deposit_sum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/reports_deposit_sum_placeholder"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Sekcja: Raport wydatków według kategorii -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_categories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/category_report_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_category_sum_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_category_sums"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_category_sum_placeholder"
+                    android:paddingTop="4dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Sekcja: Wykres kołowy udziału kategorii w wydatkach -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_category_pie"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/category_pie_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_category_pie_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <com.github.mikephil.charting.charts.PieChart
+                    android:id="@+id/pie_chart_categories"
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp"
+                    android:contentDescription="@string/reports_category_pie_content_description" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Sekcja: Wykres słupkowy wydatków vs odzyskane kaucje -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_report_bar_chart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="64dp"
+            app:cardUseCompatPadding="true"
+            app:cardPreventCornerOverlap="true"
+            app:contentPadding="20dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border_success">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/bar_chart_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reports_bar_chart_title"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/bar_chart_expenses_vs_deposits"
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp"
+                    android:contentDescription="@string/reports_bar_chart_content_description" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

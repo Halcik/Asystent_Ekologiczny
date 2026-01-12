@@ -1,6 +1,8 @@
 package com.example.asystent_ekologiczny;
 
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -11,6 +13,14 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+/**
+ * Główna aktywność hostująca cztery fragmenty dolnej nawigacji.
+ * Zarządza:
+ *  - inicjalizacją fragmentów i ich show/hide,
+ *  - przywracaniem zaznaczonej zakładki,
+ *  - ukrywaniem dolnej nawigacji gdy otwarta klawiatura,
+ *  - stosowaniem zapisanego motywu przed inflacją layoutu.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String KEY_SELECTED = "selected_item";
@@ -20,11 +30,13 @@ public class MainActivity extends AppCompatActivity {
     private DepositFragment depositFragment;
     private ReportsFragment reportsFragment;
     private SettingsFragment settingsFragment;
+    private EducationFragment educationFragment;
 
     private int pendingNav = -1; // docelowa nawigacja po zamknięciu AddProductFragment
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SettingsFragment.applySavedTheme(this); // zastosuj zapisany motyw
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
@@ -55,11 +67,13 @@ public class MainActivity extends AppCompatActivity {
             depositFragment = new DepositFragment();
             reportsFragment = new ReportsFragment();
             settingsFragment = new SettingsFragment();
+            educationFragment = new EducationFragment();
 
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.add(R.id.fragment_container, productsFragment, ProductsFragment.TAG);
             ft.add(R.id.fragment_container, depositFragment, DepositFragment.TAG).hide(depositFragment);
             ft.add(R.id.fragment_container, reportsFragment, ReportsFragment.TAG).hide(reportsFragment);
+            ft.add(R.id.fragment_container, educationFragment, EducationFragment.TAG).hide(educationFragment);
             ft.add(R.id.fragment_container, settingsFragment, SettingsFragment.TAG).hide(settingsFragment);
             ft.commit();
         } else {
@@ -67,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
             productsFragment = (ProductsFragment) getSupportFragmentManager().findFragmentByTag(ProductsFragment.TAG);
             depositFragment = (DepositFragment) getSupportFragmentManager().findFragmentByTag(DepositFragment.TAG);
             reportsFragment = (ReportsFragment) getSupportFragmentManager().findFragmentByTag(ReportsFragment.TAG);
+            educationFragment = (EducationFragment) getSupportFragmentManager().findFragmentByTag(EducationFragment.TAG);
             settingsFragment = (SettingsFragment) getSupportFragmentManager().findFragmentByTag(SettingsFragment.TAG);
         }
 
@@ -83,8 +98,22 @@ public class MainActivity extends AppCompatActivity {
                 bottomNavigationView.setSelectedItemId(dest == 0 ? R.id.navigation_products : dest);
             }
         });
+        View rootView = findViewById(android.R.id.content);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            rootView.getWindowVisibleDisplayFrame(r);
+            int screenHeight = rootView.getRootView().getHeight();
+            int keypadHeight = screenHeight - r.bottom;
+
+            if (keypadHeight > screenHeight * 0.15) {
+                bottomNavigationView.setVisibility(View.GONE); // klawiatura otwarta
+            } else {
+                bottomNavigationView.setVisibility(View.VISIBLE); // klawiatura zamknięta
+            }
+        });
     }
 
+    /** Pokazuje wybrany fragment (pozostałe ukrywa) i aktualizuje tytuł Toolbara. */
     private void showFragment(int itemId) {
         // Ukrywamy wszystko i pokazujemy właściwy fragment
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -92,27 +121,33 @@ public class MainActivity extends AppCompatActivity {
         if (productsFragment != null) ft.hide(productsFragment);
         if (depositFragment != null) ft.hide(depositFragment);
         if (reportsFragment != null) ft.hide(reportsFragment);
+        if (educationFragment != null) ft.hide(educationFragment);
         if (settingsFragment != null) ft.hide(settingsFragment);
 
         if (itemId == R.id.navigation_deposit) {
-            ft.show(depositFragment);
+            if (depositFragment != null) ft.show(depositFragment);
         } else if (itemId == R.id.navigation_reports) {
-            ft.show(reportsFragment);
+            if (reportsFragment != null) ft.show(reportsFragment);
+        } else if (itemId == R.id.navigation_education) {
+            if (educationFragment != null) ft.show(educationFragment);
         } else if (itemId == R.id.navigation_settings) {
-            ft.show(settingsFragment);
+            if (settingsFragment != null) ft.show(settingsFragment);
         } else { // navigation_products
-            ft.show(productsFragment);
+            if (productsFragment != null) ft.show(productsFragment);
         }
         ft.commit();
         updateToolbarTitle(itemId);
     }
 
+    /** Aktualizuje tytuł paska aplikacji zależnie od wybranej sekcji. */
     private void updateToolbarTitle(int itemId) {
         if (getSupportActionBar() == null) return;
         if (itemId == R.id.navigation_deposit) {
             getSupportActionBar().setTitle("Kaucja");
         } else if (itemId == R.id.navigation_reports) {
             getSupportActionBar().setTitle("Raporty");
+        } else if (itemId == R.id.navigation_education) {
+            getSupportActionBar().setTitle("Edukacja");
         } else if (itemId == R.id.navigation_settings) {
             getSupportActionBar().setTitle("Ustawienia");
         } else {
@@ -128,6 +163,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** Czy widoczny jest formularz dodawania lub szczegóły produktu (blokuje zmianę zakładki). */
     private boolean isAddProductVisible() { // rozszerzone: sprawdza również szczegóły produktu
         Fragment fAdd = getSupportFragmentManager().findFragmentByTag(AddProductFragment.TAG);
         if (fAdd != null && fAdd.isVisible()) return true;
