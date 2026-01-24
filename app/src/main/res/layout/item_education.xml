@@ -21,7 +21,6 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <!-- Dodane ImageView dla miniatury (Dodatkowe I) -->
             <ImageView
                 android:id="@+id/imageThumbnail"
                 android:layout_width="120dp"
@@ -32,7 +31,6 @@
                 android:layout_marginEnd="12dp"
                 android:contentDescription="Miniatura wideo" />
 
-            <!-- Kontener na teksty (obok obrazka) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -58,7 +56,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Kontener odtwarzacza w obrębie elementu listy (domyślnie ukryty) -->
+        <!-- Kontener odtwarzacza (domyślnie ukryty) -->
         <LinearLayout
             android:id="@+id/playerContainer"
             android:layout_width="match_parent"
@@ -69,7 +67,7 @@
             android:background="#F5F5F5"
             android:padding="4dp">
 
-            <!-- Pasek kontroli nad wideo -->
+            <!-- Pasek kontroli -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -106,14 +104,34 @@
                     android:textColor="@android:color/holo_red_dark" />
             </LinearLayout>
 
-            <!-- Sam Player -->
-            <com.google.android.exoplayer2.ui.PlayerView
-                android:id="@+id/playerView"
+            <!-- ZMIANA: FrameLayout trzymający oba odtwarzacze w tym samym miejscu -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                app:use_controller="true"
-                app:show_buffering="when_playing"
-                app:resize_mode="fit" />
+                android:layout_height="220dp">
+
+                <!-- 1. Odtwarzacz MP4 (ExoPlayer) -->
+                <com.google.android.exoplayer2.ui.PlayerView
+                    android:id="@+id/playerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:use_controller="true"
+                    app:show_buffering="when_playing"
+                    app:resize_mode="fit"
+                    android:visibility="gone" />
+
+                <!-- 2. Odtwarzacz YouTube (NOWY) -->
+                <!-- app:enableAutomaticInitialization="false" jest KLUCZOWE w listach,
+                     aby nie ładować playera od razu dla każdego elementu -->
+                <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+                    android:id="@+id/youtubePlayerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:autoPlay="false"
+                    app:enableAutomaticInitialization="false"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
         </LinearLayout>
 
     </LinearLayout>

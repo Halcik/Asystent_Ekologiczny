@@ -1,40 +1,38 @@
 package com.example.asystent_ekologiczny.education.ui;
 
+import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView; // 1. Import ImageView
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide; // 2. Import Glide
+import com.bumptech.glide.Glide;
 import com.example.asystent_ekologiczny.R;
+import com.example.asystent_ekologiczny.VideoPlayerActivity; // Upewnij się, że ten import pasuje do pakietu VideoPlayerActivity
 import com.example.asystent_ekologiczny.education.model.EducationItem;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.ui.PlayerView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.ViewHolder> {
 
+    // Listener nie jest już potrzebny, bo kliknięcie obsługujemy bezpośrednio w onBind,
+    // ale zostawiam interfejs, gdybyś go używał gdzieś w Activity (choć teraz jest zbędny).
     public interface FullscreenListener {
         void onFullscreenRequested(String videoUrl);
     }
 
     private final List<EducationItem> items = new ArrayList<>();
-    private ExoPlayer currentPlayer;
-    private ViewHolder currentHolder;
-    private final FullscreenListener fullscreenListener;
 
-    public EducationAdapter(FullscreenListener fullscreenListener) {
-        this.fullscreenListener = fullscreenListener;
+    // Konstruktor pusty, bo logika kliknięcia jest teraz wewnątrz adaptera
+    public EducationAdapter(FullscreenListener listener) {
+        // Listener ignorowany w nowym podejściu, ale zachowany dla kompatybilności wstecznej
     }
 
     public void setItems(List<EducationItem> newItems) {
@@ -49,7 +47,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_education, parent, false);
-        return new ViewHolder(view, this);
+        return new ViewHolder(view);
     }
 
     @Override
@@ -63,163 +61,91 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         return items.size();
     }
 
-    private void stopCurrentPlayer() {
-        if (currentHolder != null) {
-            currentHolder.hidePlayerOnly();
-        }
-        if (currentPlayer != null) {
-            currentPlayer.stop();
-            currentPlayer.clearMediaItems();
-            currentPlayer.release();
-            currentPlayer = null;
-        }
-        currentHolder = null;
-    }
-
-    private void startNewPlayer(ViewHolder holder, ExoPlayer player) {
-        stopCurrentPlayer();
-        currentHolder = holder;
-        currentPlayer = player;
-    }
-
+    // --- ViewHolder ---
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleView;
         private final TextView descriptionView;
-        private final ImageView thumbnailView; // 3. Nowe pole miniatury
+        private final ImageView thumbnailView;
+        // Elementy playera z XML mogą zostać (by nie zmieniać layoutu),
+        // ale będziemy je trzymać ukryte (GONE).
         private final View playerContainer;
-        private final TextView textNowPlaying;
-        private final TextView buttonFullscreen;
-        private final TextView buttonClosePlayer;
-        private final PlayerView playerView;
-        private final EducationAdapter adapter;
-        private ExoPlayer player;
-        private String lastUrl;
 
-        ViewHolder(@NonNull View itemView, EducationAdapter adapter) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
-            this.adapter = adapter;
-
-            // Pamiętaj: musisz dodać ImageView o id 'imageThumbnail' w item_education.xml
             thumbnailView = itemView.findViewById(R.id.imageThumbnail);
-
             titleView = itemView.findViewById(R.id.textTitle);
             descriptionView = itemView.findViewById(R.id.textDescription);
-            playerContainer = itemView.findViewById(R.id.playerContainer);
-            textNowPlaying = itemView.findViewById(R.id.textNowPlaying);
-            buttonFullscreen = itemView.findViewById(R.id.buttonFullscreen);
-            buttonClosePlayer = itemView.findViewById(R.id.buttonClosePlayer);
-            playerView = itemView.findViewById(R.id.playerView);
 
-            buttonClosePlayer.setOnClickListener(v -> stopAndHidePlayer());
-            buttonFullscreen.setOnClickListener(v -> {
-                if (lastUrl != null && !lastUrl.isEmpty() && adapter.fullscreenListener != null) {
-                    if (isYoutubeUrl(lastUrl)) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(lastUrl));
-                        itemView.getContext().startActivity(intent);
-                    } else {
-                        adapter.fullscreenListener.onFullscreenRequested(lastUrl);
-                    }
-                }
-            });
+            // Pobieramy kontener, żeby upewnić się, że jest ukryty
+            playerContainer = itemView.findViewById(R.id.playerContainer);
         }
 
         void bind(EducationItem item) {
             titleView.setText(item.getTitle());
             descriptionView.setText(item.getDescription());
 
-            // --- 4. Dodana logika Miniatur z Glide ---
-            String thumbUrl = item.getThumbnailUrl(); // Upewnij się, że masz taką metodę w EducationItem
+            // Zawsze ukrywamy inline player, bo otwieramy w nowym oknie
+            if (playerContainer != null) {
+                playerContainer.setVisibility(View.GONE);
+            }
+
+            // --- 1. Obsługa Miniatury (Glide) ---
+            String thumbUrl = item.getThumbnailUrl();
             String videoUrl = item.getVideoUrl();
 
-            // Automatyczne generowanie miniatury dla YouTube jeśli brak w JSON
+            // Jeśli brak miniatury w JSON, próbujemy wygenerować dla YouTube
             if (thumbUrl == null || thumbUrl.isEmpty()) {
                 if (isYoutubeUrl(videoUrl)) {
-                    try {
-                        String videoId = "";
-                        if (videoUrl.contains("v=")) {
-                            videoId = videoUrl.substring(videoUrl.indexOf("v=") + 2);
-                            if (videoId.contains("&")) videoId = videoId.substring(0, videoId.indexOf("&"));
-                        } else if (videoUrl.contains("youtu.be/")) {
-                            videoId = videoUrl.substring(videoUrl.lastIndexOf("/") + 1);
-                        }
-                        if (!videoId.isEmpty()) {
-                            thumbUrl = "https://img.youtube.com/vi/" + videoId + "/0.jpg";
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    String videoId = extractYoutubeId(videoUrl);
+                    if (!videoId.isEmpty()) {
+                        thumbUrl = "https://img.youtube.com/vi/" + videoId + "/0.jpg";
                     }
                 }
             }
 
-            // Ładowanie przez Glide
+            // Ładowanie obrazka
             if (thumbnailView != null) {
                 Glide.with(itemView.getContext())
-                        .load(thumbUrl != null ? thumbUrl : R.drawable.ic_launcher_background) // Placeholder
+                        .load(thumbUrl != null ? thumbUrl : R.drawable.ic_launcher_background) // Domyślna ikonka
                         .centerCrop()
                         .into(thumbnailView);
             }
 
-            itemView.setOnClickListener(v -> openVideo(item));
+            // --- 2. KLUCZOWE: Kliknięcie otwiera VideoPlayerActivity ---
+            itemView.setOnClickListener(v -> {
+                if (videoUrl == null || videoUrl.isEmpty()) {
+                    Toast.makeText(v.getContext(), "Brak linku do wideo", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Context context = v.getContext();
+                // Otwieramy nasze własne Activity, a nie systemowe
+                Intent intent = new Intent(context, VideoPlayerActivity.class);
+                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUrl);
+                context.startActivity(intent);
+            });
         }
 
-        // ... (reszta metod bez zmian: openVideo, isYoutubeUrl, stopAndHidePlayer, hidePlayerOnly)
-        // Wklejam je dla kompletności, abyś mógł skopiować cały plik
-
-        private void openVideo(EducationItem item) {
-            String url = item.getVideoUrl();
-            if (url == null || url.isEmpty()) {
-                Toast.makeText(itemView.getContext(), "Brak adresu wideo", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            lastUrl = url;
-            if (isYoutubeUrl(url)) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                itemView.getContext().startActivity(intent);
-                return;
-            }
-            if (player == null) {
-                player = new ExoPlayer.Builder(itemView.getContext()).build();
-                playerView.setPlayer(player);
-            }
-            adapter.startNewPlayer(this, player);
-            textNowPlaying.setText(item.getTitle());
-            playerContainer.setVisibility(View.VISIBLE);
-            // Ukrywamy miniaturę, gdy player gra (opcjonalne, ale ładne)
-            if (thumbnailView != null) thumbnailView.setVisibility(View.GONE);
-
-            MediaItem mediaItem = MediaItem.fromUri(url);
-            player.setMediaItem(mediaItem);
-            player.prepare();
-            player.play();
-        }
-
+        // Pomocnicze metody do miniatur
         private boolean isYoutubeUrl(String url) {
             if (url == null) return false;
             String lower = url.toLowerCase();
             return lower.contains("youtube.com") || lower.contains("youtu.be");
         }
 
-        private void stopAndHidePlayer() {
-            if (player != null) {
-                player.stop();
-                player.clearMediaItems();
-            }
-            playerContainer.setVisibility(View.GONE);
-            // Przywracamy miniaturę po zamknięciu playera
-            if (thumbnailView != null) thumbnailView.setVisibility(View.VISIBLE);
-
-            if (adapter.currentHolder == this) {
-                adapter.currentHolder = null;
-                if (adapter.currentPlayer != null) {
-                    adapter.currentPlayer.release();
-                    adapter.currentPlayer = null;
+        private String extractYoutubeId(String url) {
+            try {
+                String videoId = "";
+                if (url.contains("v=")) {
+                    videoId = url.substring(url.indexOf("v=") + 2);
+                    if (videoId.contains("&")) videoId = videoId.substring(0, videoId.indexOf("&"));
+                } else if (url.contains("youtu.be/")) {
+                    videoId = url.substring(url.lastIndexOf("/") + 1);
                 }
+                return videoId;
+            } catch (Exception e) {
+                return "";
             }
-        }
-
-        private void hidePlayerOnly() {
-            playerContainer.setVisibility(View.GONE);
-            if (thumbnailView != null) thumbnailView.setVisibility(View.VISIBLE);
         }
     }
 }
