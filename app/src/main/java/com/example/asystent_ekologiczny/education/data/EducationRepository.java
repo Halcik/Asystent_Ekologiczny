@@ -31,7 +31,6 @@ public class EducationRepository {
         try {
             List<EducationItem> allItems = new ArrayList<>();
 
-            // 1. Wczytaj materiały wbudowane z JSON-a (tak jak wcześniej)
             InputStream is = appContext.getAssets().open(FILE_NAME);
             StringBuilder builder = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -47,10 +46,20 @@ public class EducationRepository {
             if (items == null) {
                 items = Collections.emptyList();
             }
+
+            // Jedna instancja helpera na całą metodę
+            VideoDatabaseHelper dbHelper = new VideoDatabaseHelper(appContext);
+
+            // Zarejestruj wszystkie materiały z JSON-a w bazie historii (jeśli jeszcze ich tam nie ma)
+            for (EducationItem ei : items) {
+                if (ei.getVideoUrl() != null && !ei.getVideoUrl().isEmpty()) {
+                    dbHelper.upsertVideoIfMissing(ei.getTitle(), ei.getVideoUrl());
+                }
+            }
+
             allItems.addAll(items);
 
-            // 2. Dołącz materiały dodane przez użytkownika z SQLite
-            VideoDatabaseHelper dbHelper = new VideoDatabaseHelper(appContext);
+            // 2. Dołącz materiały dodane przez użytkownika z SQLite (jak wcześniej)
             List<VideoDatabaseHelper.VideoEntry> userVideos = dbHelper.getAllVideos();
             if (userVideos != null && !userVideos.isEmpty()) {
                 for (VideoDatabaseHelper.VideoEntry entry : userVideos) {
@@ -64,6 +73,8 @@ public class EducationRepository {
                     allItems.add(userItem);
                 }
             }
+
+            dbHelper.close();
 
             return ResultWrapper.success(allItems);
         } catch (IOException | RuntimeException e) {

@@ -38,10 +38,11 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private ExoPlayer exoPlayer;
     private PlayerView exoPlayerView;
     private YouTubePlayer currentYouTubePlayer;
-
-
     private YouTubePlayerView youTubePlayerView;
     private boolean isYoutubeMode = false;
+
+    private VideoDatabaseHelper videoDbHelper;
+    private String currentUrl;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -55,29 +56,27 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_video_player);
 
-        // Inicjalizacja widoków
         exoPlayerView = findViewById(R.id.playerView);
         youTubePlayerView = findViewById(R.id.youtubePlayerView);
 
-        // Pobranie URL
-        String url = getIntent().getStringExtra(EXTRA_VIDEO_URL);
-        if (url == null || url.isEmpty()) {
+        videoDbHelper = new VideoDatabaseHelper(this);
+
+        currentUrl = getIntent().getStringExtra(EXTRA_VIDEO_URL);
+        if (currentUrl == null || currentUrl.isEmpty()) {
             Toast.makeText(this, "Brak adresu wideo", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        if (isYoutubeUrl(url)) {
-            setupYoutubePlayer(url);
+        if (isYoutubeUrl(currentUrl)) {
+            setupYoutubePlayer(currentUrl);
         } else {
-            setupExoPlayer(url);
+            setupExoPlayer(currentUrl);
         }
     }
 
     private void setupExoPlayer(String url) {
         isYoutubeMode = false;
-
-        // Pokaż ExoPlayer, ukryj YouTube
         exoPlayerView.setVisibility(View.VISIBLE);
         youTubePlayerView.setVisibility(View.GONE);
 
@@ -88,6 +87,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
         exoPlayer.setMediaItem(mediaItem);
         exoPlayer.prepare();
         exoPlayer.play();
+
+        // Zapisz historię oglądania (ostatnie odtworzenie)
+        videoDbHelper.updateHistory(url);
     }
 
     private void setupYoutubePlayer(String url) {
@@ -95,10 +97,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
         youTubePlayerView.setVisibility(View.VISIBLE);
         exoPlayerView.setVisibility(View.GONE);
 
-
         String videoId = extractVideoId(url);
-
-        Toast.makeText(this, "ID: " + videoId, Toast.LENGTH_LONG).show();
 
         AbstractYouTubePlayerListener listener = new AbstractYouTubePlayerListener() {
             @Override
@@ -106,6 +105,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 currentYouTubePlayer = youTubePlayer;
                 if (videoId != null && !videoId.isEmpty()) {
                     youTubePlayer.loadVideo(videoId, 0);
+                    // Zapisz historię oglądania dla linku YouTube
+                    videoDbHelper.updateHistory(url);
                 }
             }
 
@@ -117,13 +118,11 @@ public class VideoPlayerActivity extends AppCompatActivity {
             }
         };
 
-        // Konfiguracja Opcji (Origin)
         IFramePlayerOptions options = new IFramePlayerOptions.Builder()
                 .controls(1)
                 .origin("http://localhost")
                 .build();
 
-        // Ręczna inicjalizacja (tylko raz!)
         youTubePlayerView.initialize(listener, options);
     }
 
@@ -196,6 +195,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
         }
         if (youTubePlayerView != null) {
             youTubePlayerView.release();
+        }
+        if (videoDbHelper != null) {
+            videoDbHelper.close();
         }
     }
 

@@ -53,10 +53,18 @@
                     android:maxLines="3"
                     android:ellipsize="end"
                     android:text="Opis filmu..." />
+
+                <TextView
+                    android:id="@+id/textLastWatched"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/darker_gray"
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Kontener odtwarzacza (domyślnie ukryty) -->
+        <!-- Kontener odtwarzacza (pokazywany dla aktualnie odtwarzanego elementu) -->
         <LinearLayout
             android:id="@+id/playerContainer"
             android:layout_width="match_parent"
@@ -88,7 +96,7 @@
                     android:id="@+id/buttonFullscreen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Pełny Ekran"
+                    android:text="Pełny ekran"
                     android:textAllCaps="true"
                     android:textStyle="bold"
                     android:textColor="@android:color/holo_blue_dark"

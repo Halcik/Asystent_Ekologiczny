@@ -64,7 +64,7 @@ public class VideoDatabaseHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    // Aktualizacja historii (Dodatkowe I)
+    // Aktualizacja historii oglądania: zapis daty ostatniego odtworzenia filmu o danym URL
     public void updateHistory(String url) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -117,5 +117,60 @@ public class VideoDatabaseHelper extends SQLiteOpenHelper {
         }
         db.close();
         return result;
+    }
+
+    public long getLastWatched(String url) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_VIDEOS,
+                new String[]{"last_watched"},
+                "url = ?",
+                new String[]{url},
+                null,
+                null,
+                null);
+        long value = 0;
+        if (cursor.moveToFirst()) {
+            value = cursor.getLong(cursor.getColumnIndexOrThrow("last_watched"));
+        }
+        cursor.close();
+        db.close();
+        return value;
+    }
+
+    public String getLastWatchedLabel(Context context, String url) {
+        long ts = getLastWatched(url);
+        if (ts <= 0) {
+            // Brak historii – zwróć myślnik lub pusty tekst
+            return "-";
+        }
+        java.text.DateFormat df = android.text.format.DateFormat.getDateFormat(context);
+        java.text.DateFormat tf = android.text.format.DateFormat.getTimeFormat(context);
+        java.util.Date date = new java.util.Date(ts);
+        return "Oglądano: " + df.format(date) + ", " + tf.format(date);
+    }
+
+    public void upsertVideoIfMissing(String title, String url) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.query(TABLE_VIDEOS,
+                new String[]{"id"},
+                "url = ?",
+                new String[]{url},
+                null,
+                null,
+                null);
+        boolean exists = false;
+        if (cursor.moveToFirst()) {
+            exists = true;
+        }
+        cursor.close();
+
+        if (!exists) {
+            ContentValues values = new ContentValues();
+            values.put("title", title);
+            values.put("url", url);
+            values.put("is_user", 0); // wideo z JSON-a, nie userowe
+            db.insert(TABLE_VIDEOS, null, values);
+        }
+        db.close();
     }
 }

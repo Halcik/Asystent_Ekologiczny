@@ -3,6 +3,7 @@ package com.example.asystent_ekologiczny.education.ui;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,8 +19,18 @@ import com.example.asystent_ekologiczny.R;
 import com.example.asystent_ekologiczny.VideoDatabaseHelper;
 import com.example.asystent_ekologiczny.VideoPlayerActivity;
 import com.example.asystent_ekologiczny.education.model.EducationItem;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.ui.PlayerView;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.ViewHolder> {
@@ -54,7 +65,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         EducationItem item = items.get(position);
         holder.bind(item);
 
-        // Obsługa długiego kliknięcia (usuwanie materiałów użytkownika)
+        // Długie kliknięcie — usuwanie materiałów użytkownika
         holder.itemView.setOnLongClickListener(v -> {
             String url = item.getVideoUrl();
             if (url == null || url.isEmpty()) {
@@ -90,28 +101,43 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleView;
         private final TextView descriptionView;
+        private final TextView lastWatchedView;
         private final ImageView thumbnailView;
         private final View playerContainer;
+        private final TextView textNowPlaying;
+        private final TextView buttonFullscreen;
+        private final TextView buttonClosePlayer;
+        private final PlayerView playerView;
+        private final YouTubePlayerView youtubePlayerView;
+
+        private ExoPlayer exoPlayer;
+        private YouTubePlayer youTubePlayer;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             thumbnailView = itemView.findViewById(R.id.imageThumbnail);
             titleView = itemView.findViewById(R.id.textTitle);
             descriptionView = itemView.findViewById(R.id.textDescription);
+            lastWatchedView = itemView.findViewById(R.id.textLastWatched);
             playerContainer = itemView.findViewById(R.id.playerContainer);
+            textNowPlaying = itemView.findViewById(R.id.textNowPlaying);
+            buttonFullscreen = itemView.findViewById(R.id.buttonFullscreen);
+            buttonClosePlayer = itemView.findViewById(R.id.buttonClosePlayer);
+            playerView = itemView.findViewById(R.id.playerView);
+            youtubePlayerView = itemView.findViewById(R.id.youtubePlayerView);
         }
 
         void bind(EducationItem item) {
+            String videoUrl = item.getVideoUrl();
+
             titleView.setText(item.getTitle());
             descriptionView.setText(item.getDescription());
 
-            if (playerContainer != null) {
-                playerContainer.setVisibility(View.GONE);
-            }
+            // Domyślnie chowamy mini-player
+            hideInlinePlayer();
 
+            // Miniatura
             String thumbUrl = item.getThumbnailUrl();
-            String videoUrl = item.getVideoUrl();
-
             if (thumbUrl == null || thumbUrl.isEmpty()) {
                 if (isYoutubeUrl(videoUrl)) {
                     String videoId = extractYoutubeId(videoUrl);
@@ -121,14 +147,47 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
                 }
             }
 
-            if (thumbnailView != null) {
-                Glide.with(itemView.getContext())
-                        .load(thumbUrl != null ? thumbUrl : R.drawable.ic_launcher_background)
-                        .centerCrop()
-                        .into(thumbnailView);
+            Glide.with(itemView.getContext())
+                    .load(thumbUrl != null ? thumbUrl : R.drawable.ic_launcher_background)
+                    .centerCrop()
+                    .into(thumbnailView);
+
+            // Historia oglądania — zawsze coś pokazujemy (albo "-", albo datę)
+            if (videoUrl != null && !videoUrl.isEmpty()) {
+                VideoDatabaseHelper dbHelper = new VideoDatabaseHelper(itemView.getContext());
+                String label = dbHelper.getLastWatchedLabel(itemView.getContext(), videoUrl);
+                dbHelper.close();
+                if (lastWatchedView != null) {
+                    lastWatchedView.setText(label);
+                    lastWatchedView.setVisibility(View.VISIBLE);
+                }
+            } else if (lastWatchedView != null) {
+                lastWatchedView.setText("-");
+                lastWatchedView.setVisibility(View.VISIBLE);
             }
 
-            itemView.setOnClickListener(v -> {
+            // Klik w miniaturę — odtwarzanie w okienku w liście + natychmiastowa aktualizacja historii w UI
+            thumbnailView.setOnClickListener(v -> {
+                if (videoUrl == null || videoUrl.isEmpty()) {
+                    Toast.makeText(v.getContext(), "Brak linku do wideo", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Zapisz historię także przy odtwarzaniu inline
+                VideoDatabaseHelper dbHelper = new VideoDatabaseHelper(itemView.getContext());
+                dbHelper.updateHistory(videoUrl);
+                String label = dbHelper.getLastWatchedLabel(itemView.getContext(), videoUrl);
+                dbHelper.close();
+
+                if (lastWatchedView != null) {
+                    lastWatchedView.setText(label);
+                    lastWatchedView.setVisibility(View.VISIBLE);
+                }
+
+                showInlinePlayer(videoUrl);
+            });
+
+            // Klik w "Pełny ekran" — otwórz VideoPlayerActivity
+            buttonFullscreen.setOnClickListener(v -> {
                 if (videoUrl == null || videoUrl.isEmpty()) {
                     Toast.makeText(v.getContext(), "Brak linku do wideo", Toast.LENGTH_SHORT).show();
                     return;
@@ -138,6 +197,64 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
                 intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUrl);
                 context.startActivity(intent);
             });
+
+            // Klik w "Zamknij" — schowaj inline player i zatrzymaj odtwarzanie
+            buttonClosePlayer.setOnClickListener(v -> hideInlinePlayer());
+        }
+
+        private void showInlinePlayer(String url) {
+            playerContainer.setVisibility(View.VISIBLE);
+            textNowPlaying.setText("Odtwarzanie w liście");
+
+            if (isYoutubeUrl(url)) {
+                // YouTube inline
+                playerView.setVisibility(View.GONE);
+                youtubePlayerView.setVisibility(View.VISIBLE);
+
+                String videoId = extractYoutubeId(url);
+
+                youtubePlayerView.initialize(new AbstractYouTubePlayerListener() {
+                    @Override
+                    public void onReady(@NonNull YouTubePlayer youTubePlayer) {
+                        EducationAdapter.ViewHolder.this.youTubePlayer = youTubePlayer;
+                        if (videoId != null && !videoId.isEmpty()) {
+                            youTubePlayer.loadVideo(videoId, 0);
+                        }
+                    }
+
+                    @Override
+                    public void onError(@NonNull YouTubePlayer youTubePlayer, @NonNull PlayerConstants.PlayerError error) {
+                        super.onError(youTubePlayer, error);
+                        Toast.makeText(itemView.getContext(), "Błąd YT: " + error.name(), Toast.LENGTH_LONG).show();
+                    }
+                }, new IFramePlayerOptions.Builder().controls(1).build());
+
+            } else {
+                // Zwykły link w ExoPlayerze
+                youtubePlayerView.setVisibility(View.GONE);
+                playerView.setVisibility(View.VISIBLE);
+
+                exoPlayer = new ExoPlayer.Builder(itemView.getContext()).build();
+                playerView.setPlayer(exoPlayer);
+                MediaItem mediaItem = MediaItem.fromUri(Uri.parse(url));
+                exoPlayer.setMediaItem(mediaItem);
+                exoPlayer.prepare();
+                exoPlayer.play();
+            }
+        }
+
+        private void hideInlinePlayer() {
+            playerContainer.setVisibility(View.GONE);
+            if (exoPlayer != null) {
+                exoPlayer.stop();
+                exoPlayer.release();
+                exoPlayer = null;
+            }
+            if (youTubePlayer != null) {
+                youTubePlayer.pause();
+                youTubePlayer = null;
+            }
+            playerView.setPlayer(null);
         }
 
         private boolean isYoutubeUrl(String url) {
