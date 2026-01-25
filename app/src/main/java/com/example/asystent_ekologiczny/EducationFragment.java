@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
@@ -20,6 +21,7 @@ import com.example.asystent_ekologiczny.education.data.EducationRepository;
 import com.example.asystent_ekologiczny.education.model.EducationItem;
 import com.example.asystent_ekologiczny.education.ui.EducationAdapter;
 import com.example.asystent_ekologiczny.education.ui.EducationViewModel;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.List;
 
@@ -40,6 +42,7 @@ public class EducationFragment extends Fragment implements EducationAdapter.Full
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         progressBar = view.findViewById(R.id.progressBar);
         textError = view.findViewById(R.id.textError);
+        FloatingActionButton fabAddVideo = view.findViewById(R.id.fab_add_video);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new EducationAdapter(this);
@@ -75,7 +78,25 @@ public class EducationFragment extends Fragment implements EducationAdapter.Full
 
         viewModel.load();
 
+        fabAddVideo.setOnClickListener(v -> openAddVideoFragment());
+
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Nie wywołujemy tu ponownie load(), bo teraz odświeżamy listę bezpośrednio po dodaniu.
+    }
+
+    private void openAddVideoFragment() {
+        AddVideoFragment dialog = new AddVideoFragment();
+        dialog.setOnVideoAddedListener(() -> {
+            if (viewModel != null) {
+                viewModel.load();
+            }
+        });
+        dialog.show(getChildFragmentManager(), AddVideoFragment.TAG);
     }
 
     @Override

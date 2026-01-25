@@ -2,6 +2,7 @@ package com.example.asystent_ekologiczny.education.data;
 
 import android.content.Context;
 
+import com.example.asystent_ekologiczny.VideoDatabaseHelper;
 import com.example.asystent_ekologiczny.education.model.EducationItem;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -12,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,6 +29,9 @@ public class EducationRepository {
 
     public ResultWrapper<List<EducationItem>> getEducationItems() {
         try {
+            List<EducationItem> allItems = new ArrayList<>();
+
+            // 1. Wczytaj materiały wbudowane z JSON-a (tak jak wcześniej)
             InputStream is = appContext.getAssets().open(FILE_NAME);
             StringBuilder builder = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -42,7 +47,25 @@ public class EducationRepository {
             if (items == null) {
                 items = Collections.emptyList();
             }
-            return ResultWrapper.success(items);
+            allItems.addAll(items);
+
+            // 2. Dołącz materiały dodane przez użytkownika z SQLite
+            VideoDatabaseHelper dbHelper = new VideoDatabaseHelper(appContext);
+            List<VideoDatabaseHelper.VideoEntry> userVideos = dbHelper.getAllVideos();
+            if (userVideos != null && !userVideos.isEmpty()) {
+                for (VideoDatabaseHelper.VideoEntry entry : userVideos) {
+                    if (!entry.isUser) continue; // tylko materiały dodane przez użytkownika
+                    EducationItem userItem = new EducationItem(
+                            entry.title,
+                            "Materiał dodany przez Ciebie",
+                            entry.url,
+                            null
+                    );
+                    allItems.add(userItem);
+                }
+            }
+
+            return ResultWrapper.success(allItems);
         } catch (IOException | RuntimeException e) {
             return ResultWrapper.error(e);
         }

@@ -1,5 +1,6 @@
 package com.example.asystent_ekologiczny.education.ui;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -14,7 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.asystent_ekologiczny.R;
-import com.example.asystent_ekologiczny.VideoPlayerActivity; // Upewnij się, że ten import pasuje do pakietu VideoPlayerActivity
+import com.example.asystent_ekologiczny.VideoDatabaseHelper;
+import com.example.asystent_ekologiczny.VideoPlayerActivity;
 import com.example.asystent_ekologiczny.education.model.EducationItem;
 
 import java.util.ArrayList;
@@ -22,17 +24,14 @@ import java.util.List;
 
 public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.ViewHolder> {
 
-    // Listener nie jest już potrzebny, bo kliknięcie obsługujemy bezpośrednio w onBind,
-    // ale zostawiam interfejs, gdybyś go używał gdzieś w Activity (choć teraz jest zbędny).
     public interface FullscreenListener {
         void onFullscreenRequested(String videoUrl);
     }
 
     private final List<EducationItem> items = new ArrayList<>();
 
-    // Konstruktor pusty, bo logika kliknięcia jest teraz wewnątrz adaptera
     public EducationAdapter(FullscreenListener listener) {
-        // Listener ignorowany w nowym podejściu, ale zachowany dla kompatybilności wstecznej
+        // listener zostawiony tylko dla kompatybilności z istniejącym kodem
     }
 
     public void setItems(List<EducationItem> newItems) {
@@ -54,6 +53,32 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         EducationItem item = items.get(position);
         holder.bind(item);
+
+        // Obsługa długiego kliknięcia (usuwanie materiałów użytkownika)
+        holder.itemView.setOnLongClickListener(v -> {
+            String url = item.getVideoUrl();
+            if (url == null || url.isEmpty()) {
+                return false;
+            }
+
+            new AlertDialog.Builder(v.getContext())
+                    .setTitle("Usuń materiał")
+                    .setMessage("Czy na pewno chcesz usunąć ten materiał?")
+                    .setPositiveButton("Usuń", (dialog, which) -> {
+                        VideoDatabaseHelper dbHelper = new VideoDatabaseHelper(v.getContext());
+                        int rows = dbHelper.deleteVideoByUrl(url);
+                        if (rows > 0) {
+                            int idx = holder.getBindingAdapterPosition();
+                            if (idx != RecyclerView.NO_POSITION) {
+                                items.remove(idx);
+                                notifyItemRemoved(idx);
+                            }
+                        }
+                    })
+                    .setNegativeButton("Anuluj", null)
+                    .show();
+            return true;
+        });
     }
 
     @Override
@@ -66,8 +91,6 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         private final TextView titleView;
         private final TextView descriptionView;
         private final ImageView thumbnailView;
-        // Elementy playera z XML mogą zostać (by nie zmieniać layoutu),
-        // ale będziemy je trzymać ukryte (GONE).
         private final View playerContainer;
 
         ViewHolder(@NonNull View itemView) {
@@ -75,8 +98,6 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             thumbnailView = itemView.findViewById(R.id.imageThumbnail);
             titleView = itemView.findViewById(R.id.textTitle);
             descriptionView = itemView.findViewById(R.id.textDescription);
-
-            // Pobieramy kontener, żeby upewnić się, że jest ukryty
             playerContainer = itemView.findViewById(R.id.playerContainer);
         }
 
@@ -84,16 +105,13 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             titleView.setText(item.getTitle());
             descriptionView.setText(item.getDescription());
 
-            // Zawsze ukrywamy inline player, bo otwieramy w nowym oknie
             if (playerContainer != null) {
                 playerContainer.setVisibility(View.GONE);
             }
 
-            // --- 1. Obsługa Miniatury (Glide) ---
             String thumbUrl = item.getThumbnailUrl();
             String videoUrl = item.getVideoUrl();
 
-            // Jeśli brak miniatury w JSON, próbujemy wygenerować dla YouTube
             if (thumbUrl == null || thumbUrl.isEmpty()) {
                 if (isYoutubeUrl(videoUrl)) {
                     String videoId = extractYoutubeId(videoUrl);
@@ -103,30 +121,25 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
                 }
             }
 
-            // Ładowanie obrazka
             if (thumbnailView != null) {
                 Glide.with(itemView.getContext())
-                        .load(thumbUrl != null ? thumbUrl : R.drawable.ic_launcher_background) // Domyślna ikonka
+                        .load(thumbUrl != null ? thumbUrl : R.drawable.ic_launcher_background)
                         .centerCrop()
                         .into(thumbnailView);
             }
 
-            // --- 2. KLUCZOWE: Kliknięcie otwiera VideoPlayerActivity ---
             itemView.setOnClickListener(v -> {
                 if (videoUrl == null || videoUrl.isEmpty()) {
                     Toast.makeText(v.getContext(), "Brak linku do wideo", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
                 Context context = v.getContext();
-                // Otwieramy nasze własne Activity, a nie systemowe
                 Intent intent = new Intent(context, VideoPlayerActivity.class);
                 intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUrl);
                 context.startActivity(intent);
             });
         }
 
-        // Pomocnicze metody do miniatur
         private boolean isYoutubeUrl(String url) {
             if (url == null) return false;
             String lower = url.toLowerCase();
