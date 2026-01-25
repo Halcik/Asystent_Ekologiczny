@@ -18,6 +18,7 @@ import com.example.asystent_ekologiczny.VideoPlayerActivity;
 import com.example.asystent_ekologiczny.education.data.EducationRepository;
 import com.example.asystent_ekologiczny.education.model.EducationItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EducationActivity extends AppCompatActivity implements EducationAdapter.FullscreenListener {
@@ -26,6 +27,7 @@ public class EducationActivity extends AppCompatActivity implements EducationAda
     private EducationAdapter adapter;
     private ProgressBar progressBar;
     private TextView textError;
+    private final List<EducationItem> playQueue = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -76,5 +78,11 @@ public class EducationActivity extends AppCompatActivity implements EducationAda
         intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUrl);
         // W pełnoekranowej aktywności wymusimy orientację poziomą
         startActivity(intent);
+    }
+
+    @Override
+    public void onAddToQueueRequested(EducationItem item) {
+        playQueue.add(item);
+        // Na razie tylko dodajemy do kolejki; można później dodać przycisk/ekran do odtwarzania całej kolejki.
     }
 }

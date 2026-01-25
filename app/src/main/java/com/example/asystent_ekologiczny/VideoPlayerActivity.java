@@ -1,6 +1,7 @@
 package com.example.asystent_ekologiczny;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
@@ -48,6 +49,8 @@ import java.util.List;
 public class VideoPlayerActivity extends AppCompatActivity {
 
     public static final String EXTRA_VIDEO_URL = "extra_video_url";
+    public static final String EXTRA_PLAYLIST = "extra_playlist";
+    public static final String EXTRA_PLAYLIST_INDEX = "extra_playlist_index";
 
     private ExoPlayer exoPlayer;
     private PlayerView exoPlayerView;
@@ -60,6 +63,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private TextView subtitlesFullView;
     private Handler subtitlesHandler = new Handler(Looper.getMainLooper());
     private Runnable subtitlesRunnable;
+
+    private ArrayList<String> playlistUrls;
+    private int playlistIndex = -1;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -79,7 +85,16 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         videoDbHelper = new VideoDatabaseHelper(this);
 
+        // Podstawowy URL (gdy nie ma playlisty)
         currentUrl = getIntent().getStringExtra(EXTRA_VIDEO_URL);
+        playlistUrls = getIntent().getStringArrayListExtra(EXTRA_PLAYLIST);
+        playlistIndex = getIntent().getIntExtra(EXTRA_PLAYLIST_INDEX, -1);
+
+        if (playlistUrls != null && playlistIndex >= 0 && playlistIndex < playlistUrls.size()) {
+            // Jeśli przyszliśmy z kolejką, to aktualny URL bierzemy z niej
+            currentUrl = playlistUrls.get(playlistIndex);
+        }
+
         if (currentUrl == null || currentUrl.isEmpty()) {
             Toast.makeText(this, "Brak adresu wideo", Toast.LENGTH_SHORT).show();
             finish();
@@ -110,10 +125,37 @@ public class VideoPlayerActivity extends AppCompatActivity {
         exoPlayer.prepare();
         exoPlayer.play();
 
+        // Listener końca odtwarzania — przejście do następnego elementu w kolejce
+        exoPlayer.addListener(new com.google.android.exoplayer2.Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if (playbackState == com.google.android.exoplayer2.Player.STATE_ENDED) {
+                    onCurrentItemFinished();
+                }
+            }
+        });
+
         startDummySubtitles();
 
         // Zapisz historię oglądania (ostatnie odtworzenie)
         videoDbHelper.updateHistory(url);
+    }
+
+    private void onCurrentItemFinished() {
+        // Jeśli mamy playlistę i są kolejne elementy, przechodzimy do następnego
+        if (playlistUrls != null && playlistIndex >= 0) {
+            int nextIndex = playlistIndex + 1;
+            if (nextIndex < playlistUrls.size()) {
+                String nextUrl = playlistUrls.get(nextIndex);
+                Intent intent = new Intent(this, VideoPlayerActivity.class);
+                intent.putExtra(EXTRA_VIDEO_URL, nextUrl);
+                intent.putStringArrayListExtra(EXTRA_PLAYLIST, playlistUrls);
+                intent.putExtra(EXTRA_PLAYLIST_INDEX, nextIndex);
+                startActivity(intent);
+            }
+        }
+        // Zamykamy bieżącą aktywność (wracamy do listy lub kolejnego elementu)
+        finish();
     }
 
     private void startDummySubtitles() {

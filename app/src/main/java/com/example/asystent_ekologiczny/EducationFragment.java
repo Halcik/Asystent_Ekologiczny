@@ -5,8 +5,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,6 +25,7 @@ import com.example.asystent_ekologiczny.education.ui.EducationAdapter;
 import com.example.asystent_ekologiczny.education.ui.EducationViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EducationFragment extends Fragment implements EducationAdapter.FullscreenListener {
@@ -33,6 +36,8 @@ public class EducationFragment extends Fragment implements EducationAdapter.Full
     private EducationAdapter adapter;
     private ProgressBar progressBar;
     private TextView textError;
+    private TextView buttonPlayQueue;
+    private final List<EducationItem> playQueue = new ArrayList<>();
 
     @Nullable
     @Override
@@ -43,6 +48,7 @@ public class EducationFragment extends Fragment implements EducationAdapter.Full
         progressBar = view.findViewById(R.id.progressBar);
         textError = view.findViewById(R.id.textError);
         FloatingActionButton fabAddVideo = view.findViewById(R.id.fab_add_video);
+        buttonPlayQueue = view.findViewById(R.id.buttonPlayQueue);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new EducationAdapter(this);
@@ -80,6 +86,29 @@ public class EducationFragment extends Fragment implements EducationAdapter.Full
 
         fabAddVideo.setOnClickListener(v -> openAddVideoFragment());
 
+        buttonPlayQueue.setOnClickListener(v -> {
+            if (playQueue.isEmpty()) {
+                Toast.makeText(requireContext(), "Kolejka jest pusta", Toast.LENGTH_SHORT).show();
+            } else {
+                // Budujemy listę URL-i z kolejki
+                ArrayList<String> urls = new ArrayList<>();
+                for (EducationItem item : playQueue) {
+                    if (item.getVideoUrl() != null && !item.getVideoUrl().isEmpty()) {
+                        urls.add(item.getVideoUrl());
+                    }
+                }
+                if (urls.isEmpty()) {
+                    Toast.makeText(requireContext(), "Brak poprawnych linków w kolejce", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Intent intent = new Intent(requireContext(), VideoPlayerActivity.class);
+                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, urls.get(0));
+                intent.putStringArrayListExtra(VideoPlayerActivity.EXTRA_PLAYLIST, urls);
+                intent.putExtra(VideoPlayerActivity.EXTRA_PLAYLIST_INDEX, 0);
+                startActivity(intent);
+            }
+        });
+
         return view;
     }
 
@@ -104,5 +133,12 @@ public class EducationFragment extends Fragment implements EducationAdapter.Full
         Intent intent = new Intent(requireContext(), VideoPlayerActivity.class);
         intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUrl);
         startActivity(intent);
+    }
+
+    @Override
+    public void onAddToQueueRequested(EducationItem item) {
+        playQueue.add(item);
+        // Na razie tylko dodajemy do kolejki; można później dodać osobny ekran/ikonę do odtwarzania całej kolejki.
+        // Przykład prostego logowania lub przyszłej rozbudowy.
     }
 }

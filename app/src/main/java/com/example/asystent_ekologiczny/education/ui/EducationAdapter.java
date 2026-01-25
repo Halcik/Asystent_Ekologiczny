@@ -42,12 +42,14 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
 
     public interface FullscreenListener {
         void onFullscreenRequested(String videoUrl);
+        void onAddToQueueRequested(EducationItem item);
     }
 
     private final List<EducationItem> items = new ArrayList<>();
+    private final FullscreenListener listener;
 
     public EducationAdapter(FullscreenListener listener) {
-        // listener zostawiony tylko dla kompatybilności z istniejącym kodem
+        this.listener = listener;
     }
 
     public void setItems(List<EducationItem> newItems) {
@@ -103,7 +105,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
     }
 
     // --- ViewHolder ---
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleView;
         private final TextView descriptionView;
         private final TextView lastWatchedView;
@@ -115,6 +117,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         private final PlayerView playerView;
         private final YouTubePlayerView youtubePlayerView;
         private final TextView subtitlesInlineView;
+        private final TextView buttonAddToQueue;
 
         private ExoPlayer exoPlayer;
         private YouTubePlayer youTubePlayer;
@@ -134,6 +137,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             playerView = itemView.findViewById(R.id.playerView);
             youtubePlayerView = itemView.findViewById(R.id.youtubePlayerView);
             subtitlesInlineView = itemView.findViewById(R.id.textSubtitlesInline);
+            buttonAddToQueue = itemView.findViewById(R.id.buttonAddToQueue);
             subtitlesHandler = new Handler(Looper.getMainLooper());
         }
 
@@ -217,6 +221,13 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             buttonClosePlayer.setOnClickListener(v -> {
                 hideInlinePlayer();
                 stopDummySubtitlesInline();
+            });
+
+            buttonAddToQueue.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onAddToQueueRequested(item);
+                    Toast.makeText(v.getContext(), "Dodano do kolejki", Toast.LENGTH_SHORT).show();
+                }
             });
         }
 
