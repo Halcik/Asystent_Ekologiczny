@@ -1,6 +1,7 @@
 package com.example.asystent_ekologiczny;
 
 import android.annotation.SuppressLint;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
@@ -28,6 +29,7 @@ import com.google.android.exoplayer2.source.SingleSampleMediaSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSource;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 
 // Importy dla YouTube Player
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
@@ -39,12 +41,16 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstan
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.TextView;
+import android.app.AlertDialog;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.widget.EditText;
 
 public class VideoPlayerActivity extends AppCompatActivity {
 
@@ -67,6 +73,14 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private ArrayList<String> playlistUrls;
     private int playlistIndex = -1;
 
+    private PlayerNotificationManager notificationManager;
+    private static final int NOTIFICATION_ID = 1001;
+    private static final String CHANNEL_ID = "video_playback_channel";
+
+    private TextView buttonSleepTimer;
+    private Handler sleepHandler = new Handler(Looper.getMainLooper());
+    private Runnable sleepRunnable;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -82,6 +96,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
         exoPlayerView = findViewById(R.id.playerView);
         youTubePlayerView = findViewById(R.id.youtubePlayerView);
         subtitlesFullView = findViewById(R.id.textSubtitlesFull);
+        buttonSleepTimer = findViewById(R.id.buttonSleepTimer);
 
         videoDbHelper = new VideoDatabaseHelper(this);
 
@@ -101,10 +116,69 @@ public class VideoPlayerActivity extends AppCompatActivity {
             return;
         }
 
+        buttonSleepTimer.setOnClickListener(v -> showSleepTimerDialog());
+
         if (isYoutubeUrl(currentUrl)) {
             setupYoutubePlayer(currentUrl);
         } else {
             setupExoPlayer(currentUrl);
+        }
+    }
+
+    private void showSleepTimerDialog() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("minuty, np. 10");
+        input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(3)}); // max 999 min
+
+        new AlertDialog.Builder(this)
+                .setTitle("Sleep Timer (minuty)")
+                .setView(input)
+                .setPositiveButton("Ustaw", (dialog, which) -> {
+                    cancelSleepTimer();
+                    String text = input.getText().toString().trim();
+                    if (text.isEmpty()) {
+                        Toast.makeText(this, "Brak wartości — timer wyłączony", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    try {
+                        int minutes = Integer.parseInt(text);
+                        if (minutes <= 0) {
+                            Toast.makeText(this, "Czas musi być > 0", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        startSleepTimer(minutes);
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(this, "Nieprawidłowa liczba", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Wyłącz", (dialog, which) -> {
+                    cancelSleepTimer();
+                    Toast.makeText(this, "Sleep timer wyłączony", Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    private void startSleepTimer(int minutes) {
+        long delayMs = minutes * 60L * 1000L;
+        sleepRunnable = () -> {
+            // Zatrzymaj Exo lub YouTube w zależności od trybu
+            if (exoPlayer != null) {
+                exoPlayer.pause();
+            }
+            if (currentYouTubePlayer != null) {
+                currentYouTubePlayer.pause();
+            }
+            Toast.makeText(this, "Odtwarzanie zatrzymane przez Sleep Timer", Toast.LENGTH_SHORT).show();
+        };
+        sleepHandler.postDelayed(sleepRunnable, delayMs);
+        Toast.makeText(this, "Sleep timer: " + minutes + " min", Toast.LENGTH_SHORT).show();
+    }
+
+    private void cancelSleepTimer() {
+        if (sleepRunnable != null) {
+            sleepHandler.removeCallbacks(sleepRunnable);
+            sleepRunnable = null;
         }
     }
 
@@ -125,6 +199,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
         exoPlayer.prepare();
         exoPlayer.play();
 
+        initPlaybackNotification();
+
         // Listener końca odtwarzania — przejście do następnego elementu w kolejce
         exoPlayer.addListener(new com.google.android.exoplayer2.Player.Listener() {
             @Override
@@ -139,6 +215,61 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         // Zapisz historię oglądania (ostatnie odtworzenie)
         videoDbHelper.updateHistory(url);
+    }
+
+    private void initPlaybackNotification() {
+        // Kanał notyfikacji (raz na start aplikacji)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            android.app.NotificationChannel channel = new android.app.NotificationChannel(
+                    CHANNEL_ID,
+                    "Odtwarzanie wideo",
+                    android.app.NotificationManager.IMPORTANCE_LOW
+            );
+            android.app.NotificationManager manager = getSystemService(android.app.NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+
+        notificationManager = new PlayerNotificationManager.Builder(
+                this,
+                NOTIFICATION_ID,
+                CHANNEL_ID
+        ).setMediaDescriptionAdapter(new PlayerNotificationManager.MediaDescriptionAdapter() {
+            @Override
+            public CharSequence getCurrentContentTitle(com.google.android.exoplayer2.Player player) {
+                return "Odtwarzanie wideo";
+            }
+
+            @Nullable
+            @Override
+            public PendingIntent createCurrentContentIntent(com.google.android.exoplayer2.Player player) {
+                Intent intent = new Intent(VideoPlayerActivity.this, VideoPlayerActivity.class);
+                intent.putExtra(EXTRA_VIDEO_URL, currentUrl);
+                return PendingIntent.getActivity(
+                        VideoPlayerActivity.this,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0)
+                );
+            }
+
+            @Nullable
+            @Override
+            public CharSequence getCurrentContentText(com.google.android.exoplayer2.Player player) {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public android.graphics.Bitmap getCurrentLargeIcon(com.google.android.exoplayer2.Player player, PlayerNotificationManager.BitmapCallback callback) {
+                return null;
+            }
+        }).build();
+
+        notificationManager.setPlayer(exoPlayer);
+        notificationManager.setUseNextAction(false);
+        notificationManager.setUsePreviousAction(false);
     }
 
     private void onCurrentItemFinished() {
@@ -300,6 +431,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (notificationManager != null) {
+            notificationManager.setPlayer(null);
+        }
         if (exoPlayer != null) {
             exoPlayer.release();
         }
@@ -312,6 +446,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
         if (subtitlesHandler != null && subtitlesRunnable != null) {
             subtitlesHandler.removeCallbacks(subtitlesRunnable);
         }
+        cancelSleepTimer();
     }
 
     @Override
