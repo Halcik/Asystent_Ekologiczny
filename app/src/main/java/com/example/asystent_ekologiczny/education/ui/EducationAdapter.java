@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +30,9 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFram
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants;
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -109,9 +114,12 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
         private final TextView buttonClosePlayer;
         private final PlayerView playerView;
         private final YouTubePlayerView youtubePlayerView;
+        private final TextView subtitlesInlineView;
 
         private ExoPlayer exoPlayer;
         private YouTubePlayer youTubePlayer;
+        private Handler subtitlesHandler;
+        private Runnable subtitlesRunnable;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -125,6 +133,8 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             buttonClosePlayer = itemView.findViewById(R.id.buttonClosePlayer);
             playerView = itemView.findViewById(R.id.playerView);
             youtubePlayerView = itemView.findViewById(R.id.youtubePlayerView);
+            subtitlesInlineView = itemView.findViewById(R.id.textSubtitlesInline);
+            subtitlesHandler = new Handler(Looper.getMainLooper());
         }
 
         void bind(EducationItem item) {
@@ -184,6 +194,11 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
                 }
 
                 showInlinePlayer(videoUrl);
+
+                // Dummy napisy tylko dla Exo (nie dla YouTube)
+                if (!isYoutubeUrl(videoUrl)) {
+                    startDummySubtitlesInline();
+                }
             });
 
             // Klik w "Pełny ekran" — otwórz VideoPlayerActivity
@@ -199,7 +214,60 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             });
 
             // Klik w "Zamknij" — schowaj inline player i zatrzymaj odtwarzanie
-            buttonClosePlayer.setOnClickListener(v -> hideInlinePlayer());
+            buttonClosePlayer.setOnClickListener(v -> {
+                hideInlinePlayer();
+                stopDummySubtitlesInline();
+            });
+        }
+
+        private void startDummySubtitlesInline() {
+            if (subtitlesInlineView == null) return;
+
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(itemView.getContext().getAssets().open("dummy_subtitles.srt"), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.isEmpty()) continue;
+                    if (line.matches("\\d+")) continue;
+                    if (line.contains("-->")) continue;
+                    lines.add(line);
+                }
+            } catch (Exception e) {
+                return;
+            }
+
+            if (lines.isEmpty()) return;
+
+            subtitlesInlineView.setVisibility(View.VISIBLE);
+
+            subtitlesRunnable = new Runnable() {
+                int index = 0;
+
+                @Override
+                public void run() {
+                    // Jeśli nie mamy Exo albo jest spauzowany, nie przesuwamy napisów
+                    if (exoPlayer == null || !exoPlayer.isPlaying()) {
+                        subtitlesHandler.postDelayed(this, 500);
+                        return;
+                    }
+
+                    subtitlesInlineView.setText(lines.get(index % lines.size()));
+                    index++;
+                    subtitlesHandler.postDelayed(this, 3000);
+                }
+            };
+
+            subtitlesHandler.post(subtitlesRunnable);
+        }
+
+        private void stopDummySubtitlesInline() {
+            if (subtitlesHandler != null && subtitlesRunnable != null) {
+                subtitlesHandler.removeCallbacks(subtitlesRunnable);
+            }
+            if (subtitlesInlineView != null) {
+                subtitlesInlineView.setVisibility(View.GONE);
+            }
         }
 
         private void showInlinePlayer(String url) {
@@ -209,7 +277,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
             if (isYoutubeUrl(url)) {
                 // YouTube inline
                 playerView.setVisibility(View.GONE);
-                youtubePlayerView.setVisibility(View.VISIBLE);
+                subtitlesInlineView.setVisibility(View.GONE); // brak dummy napisów dla YT
 
                 String videoId = extractYoutubeId(url);
 
@@ -255,6 +323,7 @@ public class EducationAdapter extends RecyclerView.Adapter<EducationAdapter.View
                 youTubePlayer = null;
             }
             playerView.setPlayer(null);
+            subtitlesInlineView.setVisibility(View.GONE);
         }
 
         private boolean isYoutubeUrl(String url) {

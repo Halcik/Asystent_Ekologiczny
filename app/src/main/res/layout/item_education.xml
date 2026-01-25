@@ -138,6 +138,18 @@
                     app:enableAutomaticInitialization="false"
                     android:visibility="gone" />
 
+                <TextView
+                    android:id="@+id/textSubtitlesInline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:padding="8dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:background="#66000000"
+                    android:gravity="center"
+                    android:visibility="gone" />
+
             </FrameLayout>
 
         </LinearLayout>

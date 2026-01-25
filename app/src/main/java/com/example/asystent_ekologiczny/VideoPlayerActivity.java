@@ -20,6 +20,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
+import com.google.android.exoplayer2.source.MergingMediaSource;
+import com.google.android.exoplayer2.source.SingleSampleMediaSource;
+import com.google.android.exoplayer2.upstream.DefaultDataSource;
+import com.google.android.exoplayer2.util.MimeTypes;
+import com.google.android.exoplayer2.C;
 
 // Importy dla YouTube Player
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
@@ -28,8 +35,15 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTube
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions;
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants; // Import błędów
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.TextView;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VideoPlayerActivity extends AppCompatActivity {
 
@@ -43,6 +57,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
     private VideoDatabaseHelper videoDbHelper;
     private String currentUrl;
+    private TextView subtitlesFullView;
+    private Handler subtitlesHandler = new Handler(Looper.getMainLooper());
+    private Runnable subtitlesRunnable;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -58,6 +75,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         exoPlayerView = findViewById(R.id.playerView);
         youTubePlayerView = findViewById(R.id.youtubePlayerView);
+        subtitlesFullView = findViewById(R.id.textSubtitlesFull);
 
         videoDbHelper = new VideoDatabaseHelper(this);
 
@@ -83,13 +101,63 @@ public class VideoPlayerActivity extends AppCompatActivity {
         exoPlayer = new ExoPlayer.Builder(this).build();
         exoPlayerView.setPlayer(exoPlayer);
 
-        MediaItem mediaItem = MediaItem.fromUri(Uri.parse(url));
-        exoPlayer.setMediaItem(mediaItem);
+        Uri videoUri = Uri.parse(url);
+        DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this);
+        MediaSource videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
+                .createMediaSource(MediaItem.fromUri(videoUri));
+
+        exoPlayer.setMediaSource(videoSource);
         exoPlayer.prepare();
         exoPlayer.play();
 
+        startDummySubtitles();
+
         // Zapisz historię oglądania (ostatnie odtworzenie)
         videoDbHelper.updateHistory(url);
+    }
+
+    private void startDummySubtitles() {
+        if (subtitlesFullView == null) return;
+
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(getAssets().open("dummy_subtitles.srt"), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // Pomijamy numer i linie z czasami, bierzemy tylko teksty
+                if (line.isEmpty()) continue;
+                if (line.matches("\\d+")) continue;
+                if (line.contains("-->")) continue;
+                lines.add(line);
+            }
+        } catch (Exception e) {
+            return; // brak pliku lub błąd – nie pokazujemy nic
+        }
+
+        if (lines.isEmpty()) return;
+
+        subtitlesFullView.setVisibility(View.VISIBLE);
+
+        subtitlesRunnable = new Runnable() {
+            int index = 0;
+
+            @Override
+            public void run() {
+                if (exoPlayer == null) return;
+
+                if (!exoPlayer.isPlaying()) {
+                    subtitlesHandler.postDelayed(this, 1000);
+                    return;
+                }
+
+                subtitlesFullView.setText(lines.get(index % lines.size()));
+                index++;
+
+                subtitlesHandler.postDelayed(this, 3000); // co 3 sekundy kolejna linia
+            }
+        };
+
+        subtitlesHandler.post(subtitlesRunnable);
     }
 
     private void setupYoutubePlayer(String url) {
@@ -198,6 +266,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
         }
         if (videoDbHelper != null) {
             videoDbHelper.close();
+        }
+        if (subtitlesHandler != null && subtitlesRunnable != null) {
+            subtitlesHandler.removeCallbacks(subtitlesRunnable);
         }
     }
 
