@@ -51,6 +51,9 @@ import java.util.List;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.widget.EditText;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class VideoPlayerActivity extends AppCompatActivity {
 
@@ -80,6 +83,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private TextView buttonSleepTimer;
     private Handler sleepHandler = new Handler(Looper.getMainLooper());
     private Runnable sleepRunnable;
+
+    private static final int REQ_POST_NOTIFICATIONS = 2001;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -118,10 +123,26 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         buttonSleepTimer.setOnClickListener(v -> showSleepTimerDialog());
 
+        // Runtime permission na Androidzie 13+ (SDK 33) dla powiadomień
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, REQ_POST_NOTIFICATIONS);
+            }
+        }
+
         if (isYoutubeUrl(currentUrl)) {
             setupYoutubePlayer(currentUrl);
         } else {
             setupExoPlayer(currentUrl);
+            // Uruchom serwis foreground, aby zapewnić powiadomienie z kontrolkami w tle
+            Intent serviceIntent = new Intent(this, VideoPlaybackService.class);
+            serviceIntent.setAction(VideoPlaybackService.ACTION_START);
+            serviceIntent.putExtra(VideoPlaybackService.EXTRA_VIDEO_URL, currentUrl);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
         }
     }
 
@@ -199,7 +220,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
         exoPlayer.prepare();
         exoPlayer.play();
 
-        initPlaybackNotification();
+        // Usuwamy lokalne powiadomienie z aktywności; powiadomienia obsługuje serwis
+        // initPlaybackNotification();
 
         // Listener końca odtwarzania — przejście do następnego elementu w kolejce
         exoPlayer.addListener(new com.google.android.exoplayer2.Player.Listener() {
@@ -215,61 +237,6 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         // Zapisz historię oglądania (ostatnie odtworzenie)
         videoDbHelper.updateHistory(url);
-    }
-
-    private void initPlaybackNotification() {
-        // Kanał notyfikacji (raz na start aplikacji)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            android.app.NotificationChannel channel = new android.app.NotificationChannel(
-                    CHANNEL_ID,
-                    "Odtwarzanie wideo",
-                    android.app.NotificationManager.IMPORTANCE_LOW
-            );
-            android.app.NotificationManager manager = getSystemService(android.app.NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
-        }
-
-        notificationManager = new PlayerNotificationManager.Builder(
-                this,
-                NOTIFICATION_ID,
-                CHANNEL_ID
-        ).setMediaDescriptionAdapter(new PlayerNotificationManager.MediaDescriptionAdapter() {
-            @Override
-            public CharSequence getCurrentContentTitle(com.google.android.exoplayer2.Player player) {
-                return "Odtwarzanie wideo";
-            }
-
-            @Nullable
-            @Override
-            public PendingIntent createCurrentContentIntent(com.google.android.exoplayer2.Player player) {
-                Intent intent = new Intent(VideoPlayerActivity.this, VideoPlayerActivity.class);
-                intent.putExtra(EXTRA_VIDEO_URL, currentUrl);
-                return PendingIntent.getActivity(
-                        VideoPlayerActivity.this,
-                        0,
-                        intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0)
-                );
-            }
-
-            @Nullable
-            @Override
-            public CharSequence getCurrentContentText(com.google.android.exoplayer2.Player player) {
-                return null;
-            }
-
-            @Nullable
-            @Override
-            public android.graphics.Bitmap getCurrentLargeIcon(com.google.android.exoplayer2.Player player, PlayerNotificationManager.BitmapCallback callback) {
-                return null;
-            }
-        }).build();
-
-        notificationManager.setPlayer(exoPlayer);
-        notificationManager.setUseNextAction(false);
-        notificationManager.setUsePreviousAction(false);
     }
 
     private void onCurrentItemFinished() {

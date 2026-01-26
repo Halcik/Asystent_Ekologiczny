@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -51,6 +52,12 @@
             android:name=".education.ui.EducationActivity"
             android:exported="false"
             android:label="Materiały Edukacyjne" />
+
+        <!-- Serwis odtwarzania wideo w tle z powiadomieniem -->
+        <service
+            android:name=".VideoPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- FileProvider dla eksportu plików -->
         <provider
